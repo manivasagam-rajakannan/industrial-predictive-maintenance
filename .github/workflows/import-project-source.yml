@@ -1,0 +1,50 @@
+name: Publish Maintenance Watch source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Expand the verified project bundle
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path, PurePosixPath
+          from zipfile import ZipFile
+
+          archive = Path('MaintenanceWatch.zip')
+          expected = '5b9ac95247b43abc3bfd6b7a71ab66d65d936a865d04832608fb9d0641d420f8'
+          if sha256(archive.read_bytes()).hexdigest() != expected:
+              raise SystemExit('The source archive differs from the reviewed release.')
+          with ZipFile(archive) as bundle:
+              for entry in bundle.infolist():
+                  name = PurePosixPath(entry.filename)
+                  if name.is_absolute() or name.parts[:1] != ('MaintenanceWatch',) or '..' in name.parts:
+                      raise SystemExit('Unexpected source path in the archive.')
+                  if entry.is_dir():
+                      continue
+                  target = Path(*name.parts[1:])
+                  if target == Path('README.md'):
+                      continue
+                  if not target.parts or any(part in {'.git', '.env', '__pycache__', 'runtime'} for part in target.parts):
+                      raise SystemExit('Unexpected local state in the source bundle.')
+                  data = bundle.read(entry)
+                  if target.exists() and target.read_bytes() != data:
+                      raise SystemExit(f'Refusing to overwrite a different file at {target}.')
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(data)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Publish full Maintenance Watch source'
+          git push origin HEAD:main
