@@ -1,0 +1,69 @@
+{
+  "name": "Maintenance Watch",
+  "dataColors": [
+    "#54DFC4",
+    "#A0B8FB",
+    "#FFC17A",
+    "#EA8F91",
+    "#B6A6E9",
+    "#6FB5DB"
+  ],
+  "foreground": "#EDF4FE",
+  "foregroundNeutralSecondary": "#A9BED2",
+  "foregroundNeutralTertiary": "#8195AD",
+  "background": "#101C2C",
+  "backgroundLight": "#142238",
+  "backgroundNeutral": "#29394E",
+  "tableAccent": "#54DFC4",
+  "good": "#54DFC4",
+  "neutral": "#FFC17A",
+  "bad": "#EA8F91",
+  "textClasses": {
+    "callout": {
+      "color": "#EDF4FE",
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 29
+    },
+    "title": {
+      "color": "#EDF4FE",
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 13
+    },
+    "header": {
+      "color": "#A9BED2",
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 11
+    },
+    "label": {
+      "color": "#A9BED2",
+      "fontFace": "Segoe UI",
+      "fontSize": 10
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#101C2C"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "title": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#EDF4FE"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

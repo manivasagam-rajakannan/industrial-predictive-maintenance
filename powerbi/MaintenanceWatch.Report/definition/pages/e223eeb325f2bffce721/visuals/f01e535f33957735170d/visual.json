@@ -1,0 +1,65 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "f01e535f33957735170d",
+  "position": {
+    "x": 32,
+    "y": 22,
+    "z": 1,
+    "width": 925,
+    "height": 96,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "textbox",
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "INDUSTRIAL ANALYTICS  /  OPERATIONS",
+                    "textStyle": {
+                      "color": "#54DFC4",
+                      "fontSize": "11pt",
+                      "fontFamily": "Segoe UI",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Maintenance Watch",
+                    "textStyle": {
+                      "color": "#EDF4FE",
+                      "fontSize": "31pt",
+                      "fontFamily": "Segoe UI",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "24-hour rolling telemetry · UTC · Select one source for review",
+                    "textStyle": {
+                      "color": "#A9BED2",
+                      "fontSize": "11pt",
+                      "fontFamily": "Segoe UI",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+runtime/
+**/__pycache__/
+data/ai4i2020.csv
+data/tableau_replay_sample.csv
+powerbi/
+MaintenanceWatch_Preview.html
+START_HERE.md
+.env

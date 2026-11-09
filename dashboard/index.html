@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1726">
+  <title>Maintenance Watch · Operations monitor</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./app-icon-192.png">
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/dataset.js" defer></script>
+  <script src="/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <a class="brand" href="#monitor" aria-label="Maintenance Watch dashboard">
+        <svg width="35" height="35" viewBox="0 0 36 36" aria-hidden="true">
+          <rect x="1" y="1" width="34" height="34" rx="8" fill="#142b33" stroke="#317468"/>
+          <path d="M7 19h5l3-8 4 15 3-8h7" fill="none" stroke="#50e4c6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Maintenance<span class="brand-accent">Watch</span></span>
+      </a>
+      <span class="division">Industrial analytics</span>
+      <div class="top-actions">
+        <span class="signal" id="feedSignal"><span class="signal-dot"></span><span id="feedLabel">Connecting</span></span>
+        <button class="button button-outline" type="button" id="openScorer">Score a reading</button>
+        <button class="button button-primary" type="button" id="openDataset">Upload dataset</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="monitor">
+    <section class="hero" aria-labelledby="pageTitle">
+      <div>
+        <p class="eyebrow">Operations / Condition monitoring</p>
+        <h1 id="pageTitle">Fleet pulse</h1>
+        <p class="hero-subtitle">Review sensor readings and surface machine conditions that need a closer look.</p>
+      </div>
+      <div class="controls" aria-label="Dashboard filters">
+        <label class="control">Data source
+          <select id="source"><option value="replay">Synthetic replay</option><option value="live">Live telemetry</option></select>
+        </label>
+        <label class="control">Asset
+          <select id="asset"><option value="">All assets</option></select>
+        </label>
+        <fieldset class="control time-control">
+          <legend>Time window</legend>
+          <div class="segments" aria-label="Time window">
+            <button type="button" data-minutes="15" aria-pressed="true">15m</button>
+            <button type="button" data-minutes="60" aria-pressed="false">1h</button>
+            <button type="button" data-minutes="1440" aria-pressed="false">24h</button>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <div class="context" role="status" id="context">
+      <span class="context-tag" id="sourceTag">Replay</span>
+      <span id="contextText">Loading scored readings…</span>
+    </div>
+    <p class="connection-error" id="connectionError" role="alert" hidden></p>
+
+    <section class="kpis" aria-label="Monitoring metrics">
+      <article class="card kpi">
+        <div class="kpi-top"><span>Readings</span><span class="kpi-icon" aria-hidden="true">≋</span></div>
+        <strong id="readings">—</strong><span class="kpi-note" id="readingsNote">In selected window</span>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span>Assets reporting</span><span class="kpi-icon" aria-hidden="true">▣</span></div>
+        <strong id="assetCount">—</strong><span class="kpi-note">Unique assets in scope</span>
+      </article>
+      <article class="card kpi kpi-warn">
+        <div class="kpi-top"><span>Review readings</span><span class="kpi-icon" aria-hidden="true">◇</span></div>
+        <strong id="reviewCount">—</strong><span class="kpi-note" id="reviewNote">Score above review threshold</span>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span>Last received</span><span class="kpi-icon" aria-hidden="true">◷</span></div>
+        <strong id="lastReceived">—</strong><span class="kpi-note" id="receivedNote">Source heartbeat</span>
+      </article>
+    </section>
+
+    <div class="workspace">
+      <section class="card panel trend-panel" aria-labelledby="trendTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Condition trend</p><h2 id="trendTitle">Machine failure score</h2></div>
+          <div class="chart-key" aria-label="Chart legend"><span><i class="peak-key"></i>Peak</span><span><i class="mean-key"></i>Mean</span><span><i class="threshold-key"></i>Review</span></div>
+        </div>
+        <div id="trend" class="chart" aria-live="off"></div>
+        <p class="panel-note" id="trendNote">Scores by time bucket · UTC</p>
+      </section>
+
+      <section class="card panel fleet-panel" aria-labelledby="fleetTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Fleet status</p><h2 id="fleetTitle">Latest by asset</h2></div>
+          <span class="subtle-pill" id="fleetCount">0 assets</span>
+        </div>
+        <div id="fleet" class="fleet-list"></div>
+        <p class="panel-note">Select a machine to isolate its history.</p>
+      </section>
+
+      <section class="card panel queue-panel" aria-labelledby="queueTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Operator review</p><h2 id="queueTitle">Recent review readings</h2></div>
+          <button class="button button-outline export" id="exportCsv" type="button">↓ Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Observed UTC</th><th scope="col">Asset</th><th scope="col">Score</th><th scope="col">Torque</th><th scope="col">Speed</th><th scope="col">Tool wear</th></tr></thead>
+            <tbody id="queue"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card panel sensors-panel" aria-labelledby="sensorsTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Reading detail</p><h2 id="sensorsTitle">Latest sensor values</h2></div>
+          <span class="subtle-pill" id="sensorAsset">—</span>
+        </div>
+        <dl class="sensor-grid" id="sensorValues"></dl>
+        <p class="panel-note" id="sensorTime">Waiting for a reading.</p>
+      </section>
+    </div>
+
+    <section class="card model-panel" aria-labelledby="validationTitle">
+      <div><p class="eyebrow">Offline model validation</p><h2 id="validationTitle">Tuned Decision Tree</h2><p id="modelScope">AI4I synthetic holdout</p></div>
+      <dl class="model-metrics" id="modelMetrics"></dl>
+      <p class="model-version" id="modelVersion">Loading version</p>
+    </section>
+    <footer><span>Maintenance Watch / Predictive maintenance portfolio project</span><span id="refreshText">Auto refresh · 4 seconds · UTC</span></footer>
+  </main>
+
+  <dialog id="scorer">
+    <form id="scoreForm">
+      <div class="panel-head">
+        <div><p class="eyebrow">Inference check</p><h2>Score one reading</h2></div>
+        <button type="button" class="button button-outline" id="closeScorer" aria-label="Close scorer">Close</button>
+      </div>
+      <p class="dialog-note">Enter the six inputs from your notebook. The score is shown here for inspection.</p>
+      <div class="form-grid">
+        <label class="control">Product grade<select name="grade"><option>L</option><option>M</option><option>H</option></select></label>
+        <label class="control">Air temperature (K)<input name="air_temperature_k" type="number" min="200" max="400" step="0.1" value="298.2" required></label>
+        <label class="control">Process temperature (K)<input name="process_temperature_k" type="number" min="200" max="400" step="0.1" value="308.6" required></label>
+        <label class="control">Speed (rpm)<input name="rotational_speed_rpm" type="number" min="500" max="5000" step="1" value="1433" required></label>
+        <label class="control">Torque (N·m)<input name="torque_nm" type="number" min="0" max="150" step="0.1" value="39.5" required></label>
+        <label class="control">Tool wear (min)<input name="tool_wear_min" type="number" min="0" max="500" step="1" value="7" required></label>
+      </div>
+      <div class="score-actions"><button class="button button-primary" type="submit">Calculate score</button><output id="scoreResult" role="status"></output></div>
+    </form>
+  </dialog>
+
+  <dialog id="dataset" aria-labelledby="datasetTitle">
+    <form id="datasetForm">
+      <div class="panel-head">
+        <div><p class="eyebrow">Batch scoring</p><h2 id="datasetTitle">Upload machine readings</h2></div>
+        <button type="button" class="button button-outline" id="closeDataset" aria-label="Close dataset upload">Close</button>
+      </div>
+      <p class="dialog-note">Upload a CSV with up to 10,000 rows and a file size up to 5 MB. In Excel, save your sheet as CSV UTF-8 first.</p>
+      <label class="control">CSV file<input id="datasetFile" type="file" accept=".csv,text/csv"></label>
+      <details class="dataset-format">
+        <summary>CSV columns and units</summary>
+        <p>Use these headings or the original AI4I column names. Grade can be H, M, or L. The asset ID is optional.</p>
+        <code>grade,air_temperature_k,process_temperature_k,rotational_speed_rpm,torque_nm,tool_wear_min,asset_id</code>
+        <p>For temperatures in Celsius, use <code>air_temperature_c</code> and <code>process_temperature_c</code> so the app can convert them.</p>
+        <button class="button button-outline" id="downloadSample" type="button">Download sample CSV</button>
+      </details>
+      <div class="dataset-actions">
+        <label class="dataset-sound"><input id="alarmEnabled" type="checkbox" checked> Play a beep for flagged readings</label>
+        <button class="button button-outline" id="trySample" type="button">Try sample</button>
+        <button class="button button-primary" id="scoreDataset" type="submit">Score CSV</button>
+      </div>
+      <p class="dataset-message" id="datasetStatus" role="status"></p>
+    </form>
+    <section id="datasetResults" aria-labelledby="resultsTitle" hidden>
+      <div class="panel-head">
+        <div><p class="eyebrow">Upload results</p><h2 id="resultsTitle">Scored readings</h2></div>
+        <button class="button button-outline" id="exportDataset" type="button">Download results CSV</button>
+      </div>
+      <dl class="dataset-totals">
+        <div><dt>Scored</dt><dd id="rowsScored">0</dd></div>
+        <div><dt>Flagged for review</dt><dd id="rowsFlagged">0</dd></div>
+        <div><dt>Rejected</dt><dd id="rowsRejected">0</dd></div>
+      </dl>
+      <p class="dataset-warning" id="datasetWarning" hidden>Flagged readings scored above 50% and need review.</p>
+      <div class="dataset-table" role="region" aria-label="Uploaded reading results" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">CSV row</th><th scope="col">Asset</th><th scope="col">Score</th><th scope="col">Result</th><th scope="col">Detail</th></tr></thead>
+          <tbody id="datasetRows"></tbody>
+        </table>
+      </div>
+      <p class="dataset-message" id="datasetLimit"></p>
+    </section>
+  </dialog>
+</body>
+</html>

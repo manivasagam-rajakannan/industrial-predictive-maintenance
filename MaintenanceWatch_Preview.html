@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1726">
+  <title>Maintenance Watch · Operations monitor</title>
+  <style>
+:root {
+  color-scheme: dark;
+  --background: #09111d;
+  --surface: #101c2c;
+  --surface-raised: #142238;
+  --line: #29394e;
+  --line-soft: #223145;
+  --text: #edf4fe;
+  --muted: #9caec4;
+  --subtle: #8195ad;
+  --teal: #54dfc4;
+  --blue: #a0b8fb;
+  --amber: #ffc17a;
+  --radius: 14px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--background); color: var(--text); font-size: 14px; }
+button, select, input { font: inherit; }
+button, select { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+button:focus-visible, select:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+[hidden] { display: none !important; }
+
+.masthead { border-bottom: 1px solid var(--line-soft); background: #0d1726; }
+.masthead-inner { max-width: 1520px; margin: auto; display: flex; align-items: center; gap: 20px; min-height: 70px; padding: 0 32px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; letter-spacing: -.45px; white-space: nowrap; }
+.brand-accent { color: var(--teal); }
+.division { color: var(--muted); border-left: 1px solid var(--line); padding-left: 20px; font-size: 12px; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+.signal { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.signal-dot { width: 8px; height: 8px; border-radius: 100%; background: var(--subtle); }
+.signal[data-state="active"] .signal-dot { background: var(--teal); box-shadow: 0 0 0 4px #54dfc418; }
+.signal[data-state="late"] .signal-dot, .signal[data-state="error"] .signal-dot { background: var(--amber); }
+.signal[data-state="active"] { color: var(--teal); }
+.signal[data-state="late"], .signal[data-state="error"] { color: var(--amber); }
+.button { border-radius: 8px; min-height: 38px; padding: 0 13px; font-weight: 600; font-size: 12px; }
+.button-outline { background: #152238; border: 1px solid var(--line); color: var(--text); }
+.button-outline:hover { background: #1d2e45; }
+.button-primary { background: var(--teal); border: 1px solid var(--teal); color: #0a2227; }
+.button-primary:hover { background: #7aecd7; }
+
+main { max-width: 1520px; margin: auto; padding: 32px; }
+.hero { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 23px; margin-bottom: 19px; }
+.eyebrow { margin: 0 0 6px; color: var(--teal); font-size: 10px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+h1, h2, p { margin-top: 0; }
+h1 { margin-bottom: 7px; font-size: clamp(34px, 4vw, 48px); letter-spacing: -.055em; line-height: 1.04; }
+h2 { margin-bottom: 0; font-size: 19px; line-height: 1.25; letter-spacing: -.035em; }
+.hero-subtitle { margin: 0; color: var(--muted); max-width: 560px; line-height: 1.5; }
+.controls { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; }
+.control { display: grid; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 650; }
+.control select, .control input { min-height: 38px; min-width: 112px; border: 1px solid var(--line); color: var(--text); background: #101e31; border-radius: 8px; padding: 7px 10px; font-size: 13px; }
+.control select:disabled { color: var(--muted); opacity: 1; cursor: default; }
+.time-control { border: 0; margin: 0; padding: 0; }
+.time-control legend { padding: 0; margin-bottom: 5px; }
+.segments { display: flex; min-height: 38px; border: 1px solid var(--line); background: #101e31; padding: 3px; border-radius: 8px; }
+.segments button { background: none; color: var(--muted); border: 0; border-radius: 5px; padding: 0 10px; font-weight: 650; font-size: 12px; }
+.segments button[aria-pressed="true"] { color: var(--teal); background: #203b43; }
+.context { display: flex; align-items: center; gap: 10px; min-height: 43px; margin-bottom: 16px; padding: 9px 13px; color: #b0c5d6; background: #102532; border: 1px solid #25434e; border-radius: 9px; font-size: 12px; line-height: 1.45; }
+.context-tag { color: var(--teal); font-size: 10px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; background: #224541; padding: 4px 7px; border-radius: 4px; white-space: nowrap; }
+.connection-error { margin-bottom: 14px; color: var(--amber); }
+
+.card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 15px; }
+.kpi { padding: 15px 17px 14px; min-height: 119px; position: relative; overflow: hidden; }
+.kpi-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-weight: 650; font-size: 12px; }
+.kpi-icon { display: inline-grid; width: 27px; height: 27px; place-items: center; background: #182a3d; color: var(--teal); border-radius: 7px; font-size: 15px; }
+.kpi strong { display: block; margin: 2px 0 4px; font-size: clamp(24px, 3.25vw, 33px); letter-spacing: -.06em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi-warn .kpi-icon { color: var(--amber); background: #3a3028; }
+.kpi-warn strong { color: var(--amber); }
+.kpi-note { color: var(--subtle); font-size: 11px; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 2.08fr) minmax(0, 1fr); gap: 15px; align-items: stretch; }
+.panel { min-width: 0; padding: 18px; }
+.panel-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 10px; }
+.panel-note { margin: 8px 0 0; color: var(--subtle); font-size: 11px; line-height: 1.4; }
+.chart-key { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--muted); font-size: 10px; padding-top: 4px; }
+.chart-key span { display: flex; align-items: center; gap: 4px; }
+.chart-key i { width: 11px; height: 3px; background: var(--teal); border-radius: 2px; }
+.chart-key .mean-key { background: var(--blue); }
+.chart-key .threshold-key { background: var(--amber); }
+.chart { min-height: 205px; display: grid; align-items: center; }
+.chart svg { display: block; width: 100%; height: auto; max-height: 270px; overflow: visible; }
+.grid-line { stroke: #27384f; stroke-width: 1; }
+.chart-label { fill: #a5b6ca; font-size: 11px; font-family: inherit; font-variant-numeric: tabular-nums; }
+.peak-line { fill: none; stroke: var(--teal); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.mean-line { fill: none; stroke: var(--blue); stroke-width: 1.7; stroke-dasharray: 4 5; opacity: .9; }
+.threshold-line { stroke: var(--amber); stroke-width: 1; stroke-dasharray: 5 5; opacity: .65; }
+.review-point { fill: var(--amber); stroke: var(--surface); stroke-width: 1.5; }
+.empty { padding: 28px 10px; color: var(--muted); text-align: center; line-height: 1.5; }
+.subtle-pill { flex-shrink: 0; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 4px 7px; font-size: 10px; }
+.fleet-list { display: grid; gap: 8px; min-height: 180px; max-height: 238px; overflow-y: auto; padding: 2px; }
+.fleet-row { text-align: left; background: #142237; color: var(--text); border: 1px solid #25384d; border-radius: 9px; padding: 9px 10px; display: grid; gap: 6px; width: 100%; }
+.fleet-row:hover, .fleet-row[data-selected="true"] { border-color: #448e87; }
+.fleet-row-top, .fleet-row-bottom { display: flex; justify-content: space-between; align-items: center; gap: 7px; }
+.fleet-row-top strong { font-size: 12px; }
+.fleet-row-bottom { font-size: 10px; color: var(--muted); }
+.status { white-space: nowrap; color: var(--teal); font-size: 10px; font-weight: 700; }
+.status.review { color: var(--amber); }
+.score-progress { appearance: none; height: 4px; width: 100%; border: 0; border-radius: 4px; overflow: hidden; background: #2b3b52; }
+.score-progress::-webkit-progress-bar { background: #2b3b52; }
+.score-progress::-webkit-progress-value { background: var(--teal); }
+.score-progress::-moz-progress-bar { background: var(--teal); }
+.score-progress.review::-webkit-progress-value { background: var(--amber); }
+.score-progress.review::-moz-progress-bar { background: var(--amber); }
+
+.table-scroll { overflow: auto; max-height: 265px; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
+th { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; text-align: left; }
+th, td { padding: 10px 8px; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 0; }
+thead { position: sticky; top: 0; background: var(--surface); }
+tbody tr:last-child td { border-bottom: 0; }
+.score-cell { color: var(--amber); font-weight: 750; }
+.sensor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 13px 0 0; }
+.sensor-grid div { background: #142237; border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px; min-width: 0; }
+.sensor-grid dt { color: var(--muted); font-size: 10px; margin-bottom: 3px; }
+.sensor-grid dd { margin: 0; font-weight: 750; font-size: 15px; font-variant-numeric: tabular-nums; }
+.model-panel { display: grid; grid-template-columns: minmax(175px, 1fr) 2.15fr auto; gap: 16px; align-items: center; padding: 16px 18px; margin-top: 15px; }
+.model-panel p:not(.eyebrow) { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.model-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin: 0; }
+.model-metrics dt { color: var(--muted); font-size: 10px; }
+.model-metrics dd { margin: 3px 0 0; font-weight: 750; font-size: 19px; font-variant-numeric: tabular-nums; }
+.model-version { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 16px; color: var(--subtle); font-size: 10px; }
+
+dialog { max-width: min(94vw, 550px); width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: 0 15px 80px #0009; }
+dialog::backdrop { background: #030812c7; }
+.dialog-note { color: var(--muted); margin: 8px 0 15px; line-height: 1.5; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid input, .form-grid select { min-width: 0; width: 100%; }
+#dataset { max-width: min(94vw, 820px); }
+#datasetFile { width: 100%; padding: 9px; }
+.dataset-format { color: var(--muted); margin: 14px 0; font-size: 13px; }
+.dataset-format summary { cursor: pointer; color: var(--teal); }
+.dataset-format code { overflow-wrap: anywhere; }
+.dataset-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.dataset-sound { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; margin-right: auto; }
+.dataset-sound input { accent-color: var(--teal); }
+.dataset-message { color: var(--muted); font-size: 13px; margin: 8px 0; min-height: 1.2em; }
+.dataset-message[data-alert="true"], .dataset-warning { color: var(--amber); }
+#datasetResults { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+.dataset-totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 12px; }
+.dataset-totals div { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; padding: 9px; }
+.dataset-totals dt { color: var(--muted); font-size: 12px; }
+.dataset-totals dd { margin: 3px 0 0; font-size: 23px; font-weight: 700; }
+#rowsFlagged { color: var(--amber); }
+.dataset-warning { background: #2a231c; border: 1px solid #6a4e31; border-radius: 8px; padding: 9px; font-size: 13px; }
+.dataset-table { max-height: 250px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.dataset-table th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.dataset-table td:last-child { white-space: normal; overflow-wrap: anywhere; }
+.dataset-table tr[data-review="true"] { background: #2a231c; }
+.dataset-table tr[data-review="true"] td:nth-child(4) { color: var(--amber); font-weight: 700; }
+.button:disabled { opacity: .55; cursor: progress; }
+.score-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.score-actions output { color: var(--teal); font-weight: 650; }
+.score-actions output[data-alert="true"] { color: var(--amber); }
+
+@media (max-width: 960px) {
+  main, .masthead-inner { padding-left: 19px; padding-right: 19px; }
+  .workspace { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
+  .model-panel { grid-template-columns: 1fr 2fr; }
+  .model-version { grid-column: 1 / -1; }
+}
+@media (max-width: 740px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .masthead-inner { min-height: 60px; gap: 9px; }
+  .division { display: none; }
+  .top-actions { gap: 8px; }
+  .signal { font-size: 10px; }
+  main { padding-top: 23px; }
+  .model-panel { grid-template-columns: 1fr; }
+}
+@media (max-width: 405px) {
+  .masthead-inner, main { padding-left: 12px; padding-right: 12px; }
+  .brand { font-size: 15px; }
+  .brand svg { width: 27px; height: 27px; }
+  .button { padding: 0 8px; }
+  .controls { column-gap: 7px; }
+  .control select { min-width: 100px; }
+  .segments button { padding: 0 7px; }
+  .panel { padding: 13px; }
+}
+@media (max-width: 580px) {
+  .masthead-inner { flex-wrap: wrap; padding-top: 9px; padding-bottom: 9px; }
+  .top-actions .signal { display: none; }
+  #dataset { padding: 14px; }
+}
+
+</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <a class="brand" href="#monitor" aria-label="Maintenance Watch dashboard">
+        <svg width="35" height="35" viewBox="0 0 36 36" aria-hidden="true">
+          <rect x="1" y="1" width="34" height="34" rx="8" fill="#142b33" stroke="#317468"/>
+          <path d="M7 19h5l3-8 4 15 3-8h7" fill="none" stroke="#50e4c6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Maintenance<span class="brand-accent">Watch</span></span>
+      </a>
+      <span class="division">Industrial analytics</span>
+      <div class="top-actions">
+        <span class="signal" id="feedSignal"><span class="signal-dot"></span><span id="feedLabel">Connecting</span></span>
+        <button class="button button-outline" type="button" id="openScorer">Score a reading</button>
+        <button class="button button-primary" type="button" id="openDataset">Upload dataset</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="monitor">
+    <section class="hero" aria-labelledby="pageTitle">
+      <div>
+        <p class="eyebrow">Operations / Condition monitoring</p>
+        <h1 id="pageTitle">Fleet pulse</h1>
+        <p class="hero-subtitle">Review sensor readings and surface machine conditions that need a closer look.</p>
+      </div>
+      <div class="controls" aria-label="Dashboard filters">
+        <label class="control">Data source
+          <select id="source"><option value="replay">Synthetic replay</option><option value="live">Live telemetry</option></select>
+        </label>
+        <label class="control">Asset
+          <select id="asset"><option value="">All assets</option></select>
+        </label>
+        <fieldset class="control time-control">
+          <legend>Time window</legend>
+          <div class="segments" aria-label="Time window">
+            <button type="button" data-minutes="15" aria-pressed="true">15m</button>
+            <button type="button" data-minutes="60" aria-pressed="false">1h</button>
+            <button type="button" data-minutes="1440" aria-pressed="false">24h</button>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <div class="context" role="status" id="context">
+      <span class="context-tag" id="sourceTag">Replay</span>
+      <span id="contextText">Loading scored readings…</span>
+    </div>
+    <p class="connection-error" id="connectionError" role="alert" hidden></p>
+
+    <section class="kpis" aria-label="Monitoring metrics">
+      <article class="card kpi">
+        <div class="kpi-top"><span>Readings</span><span class="kpi-icon" aria-hidden="true">≋</span></div>
+        <strong id="readings">—</strong><span class="kpi-note" id="readingsNote">In selected window</span>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span>Assets reporting</span><span class="kpi-icon" aria-hidden="true">▣</span></div>
+        <strong id="assetCount">—</strong><span class="kpi-note">Unique assets in scope</span>
+      </article>
+      <article class="card kpi kpi-warn">
+        <div class="kpi-top"><span>Review readings</span><span class="kpi-icon" aria-hidden="true">◇</span></div>
+        <strong id="reviewCount">—</strong><span class="kpi-note" id="reviewNote">Score above review threshold</span>
+      </article>
+      <article class="card kpi">
+        <div class="kpi-top"><span>Last received</span><span class="kpi-icon" aria-hidden="true">◷</span></div>
+        <strong id="lastReceived">—</strong><span class="kpi-note" id="receivedNote">Source heartbeat</span>
+      </article>
+    </section>
+
+    <div class="workspace">
+      <section class="card panel trend-panel" aria-labelledby="trendTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Condition trend</p><h2 id="trendTitle">Machine failure score</h2></div>
+          <div class="chart-key" aria-label="Chart legend"><span><i class="peak-key"></i>Peak</span><span><i class="mean-key"></i>Mean</span><span><i class="threshold-key"></i>Review</span></div>
+        </div>
+        <div id="trend" class="chart" aria-live="off"></div>
+        <p class="panel-note" id="trendNote">Scores by time bucket · UTC</p>
+      </section>
+
+      <section class="card panel fleet-panel" aria-labelledby="fleetTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Fleet status</p><h2 id="fleetTitle">Latest by asset</h2></div>
+          <span class="subtle-pill" id="fleetCount">0 assets</span>
+        </div>
+        <div id="fleet" class="fleet-list"></div>
+        <p class="panel-note">Select a machine to isolate its history.</p>
+      </section>
+
+      <section class="card panel queue-panel" aria-labelledby="queueTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Operator review</p><h2 id="queueTitle">Recent review readings</h2></div>
+          <button class="button button-outline export" id="exportCsv" type="button">↓ Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Observed UTC</th><th scope="col">Asset</th><th scope="col">Score</th><th scope="col">Torque</th><th scope="col">Speed</th><th scope="col">Tool wear</th></tr></thead>
+            <tbody id="queue"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card panel sensors-panel" aria-labelledby="sensorsTitle">
+        <div class="panel-head">
+          <div><p class="eyebrow">Reading detail</p><h2 id="sensorsTitle">Latest sensor values</h2></div>
+          <span class="subtle-pill" id="sensorAsset">—</span>
+        </div>
+        <dl class="sensor-grid" id="sensorValues"></dl>
+        <p class="panel-note" id="sensorTime">Waiting for a reading.</p>
+      </section>
+    </div>
+
+    <section class="card model-panel" aria-labelledby="validationTitle">
+      <div><p class="eyebrow">Offline model validation</p><h2 id="validationTitle">Tuned Decision Tree</h2><p id="modelScope">AI4I synthetic holdout</p></div>
+      <dl class="model-metrics" id="modelMetrics"></dl>
+      <p class="model-version" id="modelVersion">Loading version</p>
+    </section>
+    <footer><span>Maintenance Watch / Predictive maintenance portfolio project</span><span id="refreshText">Auto refresh · 4 seconds · UTC</span></footer>
+  </main>
+
+  <dialog id="scorer">
+    <form id="scoreForm">
+      <div class="panel-head">
+        <div><p class="eyebrow">Inference check</p><h2>Score one reading</h2></div>
+        <button type="button" class="button button-outline" id="closeScorer" aria-label="Close scorer">Close</button>
+      </div>
+      <p class="dialog-note">Enter the six inputs from your notebook. The score is shown here for inspection.</p>
+      <div class="form-grid">
+        <label class="control">Product grade<select name="grade"><option>L</option><option>M</option><option>H</option></select></label>
+        <label class="control">Air temperature (K)<input name="air_temperature_k" type="number" min="200" max="400" step="0.1" value="298.2" required></label>
+        <label class="control">Process temperature (K)<input name="process_temperature_k" type="number" min="200" max="400" step="0.1" value="308.6" required></label>
+        <label class="control">Speed (rpm)<input name="rotational_speed_rpm" type="number" min="500" max="5000" step="1" value="1433" required></label>
+        <label class="control">Torque (N·m)<input name="torque_nm" type="number" min="0" max="150" step="0.1" value="39.5" required></label>
+        <label class="control">Tool wear (min)<input name="tool_wear_min" type="number" min="0" max="500" step="1" value="7" required></label>
+      </div>
+      <div class="score-actions"><button class="button button-primary" type="submit">Calculate score</button><output id="scoreResult" role="status"></output></div>
+    </form>
+  </dialog>
+
+  <dialog id="dataset" aria-labelledby="datasetTitle">
+    <form id="datasetForm">
+      <div class="panel-head">
+        <div><p class="eyebrow">Batch scoring</p><h2 id="datasetTitle">Upload machine readings</h2></div>
+        <button type="button" class="button button-outline" id="closeDataset" aria-label="Close dataset upload">Close</button>
+      </div>
+      <p class="dialog-note">Upload a CSV with up to 10,000 rows and a file size up to 5 MB. In Excel, save your sheet as CSV UTF-8 first.</p>
+      <label class="control">CSV file<input id="datasetFile" type="file" accept=".csv,text/csv"></label>
+      <details class="dataset-format">
+        <summary>CSV columns and units</summary>
+        <p>Use these headings or the original AI4I column names. Grade can be H, M, or L. The asset ID is optional.</p>
+        <code>grade,air_temperature_k,process_temperature_k,rotational_speed_rpm,torque_nm,tool_wear_min,asset_id</code>
+        <p>For temperatures in Celsius, use <code>air_temperature_c</code> and <code>process_temperature_c</code> so the app can convert them.</p>
+        <button class="button button-outline" id="downloadSample" type="button">Download sample CSV</button>
+      </details>
+      <div class="dataset-actions">
+        <label class="dataset-sound"><input id="alarmEnabled" type="checkbox" checked> Play a beep for flagged readings</label>
+        <button class="button button-outline" id="trySample" type="button">Try sample</button>
+        <button class="button button-primary" id="scoreDataset" type="submit">Score CSV</button>
+      </div>
+      <p class="dataset-message" id="datasetStatus" role="status"></p>
+    </form>
+    <section id="datasetResults" aria-labelledby="resultsTitle" hidden>
+      <div class="panel-head">
+        <div><p class="eyebrow">Upload results</p><h2 id="resultsTitle">Scored readings</h2></div>
+        <button class="button button-outline" id="exportDataset" type="button">Download results CSV</button>
+      </div>
+      <dl class="dataset-totals">
+        <div><dt>Scored</dt><dd id="rowsScored">0</dd></div>
+        <div><dt>Flagged for review</dt><dd id="rowsFlagged">0</dd></div>
+        <div><dt>Rejected</dt><dd id="rowsRejected">0</dd></div>
+      </dl>
+      <p class="dataset-warning" id="datasetWarning" hidden>Flagged readings scored above 50% and need review.</p>
+      <div class="dataset-table" role="region" aria-label="Uploaded reading results" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">CSV row</th><th scope="col">Asset</th><th scope="col">Score</th><th scope="col">Result</th><th scope="col">Detail</th></tr></thead>
+          <tbody id="datasetRows"></tbody>
+        </table>
+      </div>
+      <p class="dataset-message" id="datasetLimit"></p>
+    </section>
+  </dialog>
+<script type="application/json" id="previewFixture">{"rows":[{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.3,"process_temperature_k":310.4,"rotational_speed_rpm":1629.0,"torque_nm":32.6,"tool_wear_min":177.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9645,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.9,"process_temperature_k":311.3,"rotational_speed_rpm":1501.0,"torque_nm":40.8,"tool_wear_min":59.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5759,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.3,"process_temperature_k":309.1,"rotational_speed_rpm":1387.0,"torque_nm":52.3,"tool_wear_min":160.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":9814,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":311.4,"rotational_speed_rpm":1709.0,"torque_nm":32.3,"tool_wear_min":64.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7709,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.5,"process_temperature_k":309.3,"rotational_speed_rpm":1972.0,"torque_nm":19.3,"tool_wear_min":177.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2575,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":300.3,"process_temperature_k":309.7,"rotational_speed_rpm":1452.0,"torque_nm":41.5,"tool_wear_min":139.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7143,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":297.5,"process_temperature_k":309.3,"rotational_speed_rpm":1525.0,"torque_nm":41.7,"tool_wear_min":235.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":592,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.6,"process_temperature_k":312.0,"rotational_speed_rpm":1309.0,"torque_nm":52.9,"tool_wear_min":86.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4769,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.7,"process_temperature_k":312.4,"rotational_speed_rpm":1360.0,"torque_nm":47.8,"tool_wear_min":11.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":5407,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":303.6,"process_temperature_k":312.3,"rotational_speed_rpm":2168.0,"torque_nm":17.7,"tool_wear_min":219.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":4900,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.8,"process_temperature_k":310.8,"rotational_speed_rpm":1546.0,"torque_nm":43.4,"tool_wear_min":29.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3542,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":304.1,"process_temperature_k":313.5,"rotational_speed_rpm":1470.0,"torque_nm":45.8,"tool_wear_min":85.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5095,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.3,"process_temperature_k":310.9,"rotational_speed_rpm":1403.0,"torque_nm":47.2,"tool_wear_min":173.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":3847,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.2,"process_temperature_k":309.5,"rotational_speed_rpm":1729.0,"torque_nm":28.4,"tool_wear_min":131.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2819,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":303.4,"process_temperature_k":311.8,"rotational_speed_rpm":2268.0,"torque_nm":15.8,"tool_wear_min":20.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4827,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.1,"process_temperature_k":311.3,"rotational_speed_rpm":1547.0,"torque_nm":40.0,"tool_wear_min":201.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":7421,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.9,"process_temperature_k":311.3,"rotational_speed_rpm":1647.0,"torque_nm":27.5,"tool_wear_min":26.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7439,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.2,"process_temperature_k":310.8,"rotational_speed_rpm":1827.0,"torque_nm":23.8,"tool_wear_min":9.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3783,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":310.2,"rotational_speed_rpm":1633.0,"torque_nm":28.0,"tool_wear_min":164.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4535,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.1,"process_temperature_k":311.3,"rotational_speed_rpm":1535.0,"torque_nm":42.3,"tool_wear_min":92.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7465,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.4,"process_temperature_k":310.8,"rotational_speed_rpm":1285.0,"torque_nm":62.6,"tool_wear_min":183.0,"model_score":0.6,"review_flag":1,"observed_failure":1,"source_udi":3351,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":300.6,"process_temperature_k":310.6,"rotational_speed_rpm":1427.0,"torque_nm":52.8,"tool_wear_min":75.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":5941,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":297.1,"process_temperature_k":307.9,"rotational_speed_rpm":1662.0,"torque_nm":26.9,"tool_wear_min":183.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9089,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":299.8,"process_temperature_k":310.3,"rotational_speed_rpm":1805.0,"torque_nm":23.7,"tool_wear_min":198.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":7333,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.0,"process_temperature_k":307.7,"rotational_speed_rpm":1529.0,"torque_nm":34.1,"tool_wear_min":11.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1924,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":310.3,"rotational_speed_rpm":1480.0,"torque_nm":45.8,"tool_wear_min":123.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4519,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":299.8,"process_temperature_k":309.9,"rotational_speed_rpm":1553.0,"torque_nm":36.6,"tool_wear_min":157.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7232,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":298.3,"process_temperature_k":309.6,"rotational_speed_rpm":1681.0,"torque_nm":27.1,"tool_wear_min":194.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8519,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":309.5,"rotational_speed_rpm":1777.0,"torque_nm":23.6,"tool_wear_min":0.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3028,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.8,"process_temperature_k":310.6,"rotational_speed_rpm":1651.0,"torque_nm":33.3,"tool_wear_min":0.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8285,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.3,"process_temperature_k":311.1,"rotational_speed_rpm":1504.0,"torque_nm":39.1,"tool_wear_min":2.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5829,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":296.9,"process_temperature_k":308.3,"rotational_speed_rpm":1555.0,"torque_nm":38.2,"tool_wear_min":175.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":737,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.8,"process_temperature_k":310.0,"rotational_speed_rpm":1389.0,"torque_nm":49.6,"tool_wear_min":149.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":9732,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":296.9,"process_temperature_k":307.8,"rotational_speed_rpm":1400.0,"torque_nm":57.1,"tool_wear_min":202.0,"model_score":0.05555555555555555,"review_flag":0,"observed_failure":1,"source_udi":1163,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.3,"process_temperature_k":308.5,"rotational_speed_rpm":1664.0,"torque_nm":31.6,"tool_wear_min":144.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":218,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":299.7,"process_temperature_k":309.1,"rotational_speed_rpm":1508.0,"torque_nm":41.2,"tool_wear_min":152.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2738,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.2,"process_temperature_k":311.7,"rotational_speed_rpm":1448.0,"torque_nm":54.2,"tool_wear_min":173.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7494,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":298.3,"process_temperature_k":308.0,"rotational_speed_rpm":1553.0,"torque_nm":41.0,"tool_wear_min":52.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1784,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":310.2,"rotational_speed_rpm":1539.0,"torque_nm":37.7,"tool_wear_min":29.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4398,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":301.0,"process_temperature_k":311.2,"rotational_speed_rpm":1521.0,"torque_nm":35.8,"tool_wear_min":13.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6851,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":297.6,"process_temperature_k":308.6,"rotational_speed_rpm":1444.0,"torque_nm":48.2,"tool_wear_min":46.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9116,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":303.0,"process_temperature_k":311.1,"rotational_speed_rpm":1980.0,"torque_nm":20.2,"tool_wear_min":137.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4608,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":302.4,"process_temperature_k":311.8,"rotational_speed_rpm":1539.0,"torque_nm":39.9,"tool_wear_min":101.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5530,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.5,"process_temperature_k":309.8,"rotational_speed_rpm":1555.0,"torque_nm":38.9,"tool_wear_min":166.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3003,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":299.9,"process_temperature_k":309.5,"rotational_speed_rpm":1412.0,"torque_nm":57.9,"tool_wear_min":59.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":6366,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":296.7,"process_temperature_k":308.0,"rotational_speed_rpm":1451.0,"torque_nm":50.7,"tool_wear_min":197.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":746,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.4,"process_temperature_k":311.9,"rotational_speed_rpm":1377.0,"torque_nm":41.6,"tool_wear_min":34.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4834,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":298.7,"process_temperature_k":309.6,"rotational_speed_rpm":1738.0,"torque_nm":27.3,"tool_wear_min":79.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9787,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":297.5,"process_temperature_k":308.8,"rotational_speed_rpm":1430.0,"torque_nm":49.4,"tool_wear_min":2.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":1255,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.5,"process_temperature_k":309.9,"rotational_speed_rpm":1994.0,"torque_nm":19.8,"tool_wear_min":189.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6333,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.3,"process_temperature_k":311.7,"rotational_speed_rpm":1571.0,"torque_nm":31.2,"tool_wear_min":123.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8079,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.1,"process_temperature_k":307.8,"rotational_speed_rpm":1379.0,"torque_nm":49.1,"tool_wear_min":135.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":9960,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.0,"process_temperature_k":310.6,"rotational_speed_rpm":1467.0,"torque_nm":44.9,"tool_wear_min":86.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3814,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":310.6,"rotational_speed_rpm":1520.0,"torque_nm":45.9,"tool_wear_min":146.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7059,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":304.0,"process_temperature_k":313.2,"rotational_speed_rpm":1612.0,"torque_nm":31.7,"tool_wear_min":206.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":5307,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.0,"process_temperature_k":308.7,"rotational_speed_rpm":1892.0,"torque_nm":22.8,"tool_wear_min":96.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2037,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":298.9,"process_temperature_k":310.6,"rotational_speed_rpm":1615.0,"torque_nm":33.0,"tool_wear_min":221.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":8284,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":299.8,"process_temperature_k":310.0,"rotational_speed_rpm":1397.0,"torque_nm":48.1,"tool_wear_min":164.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":7235,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.4,"process_temperature_k":307.9,"rotational_speed_rpm":2381.0,"torque_nm":14.2,"tool_wear_min":164.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":1748,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.2,"process_temperature_k":307.9,"rotational_speed_rpm":1326.0,"torque_nm":75.4,"tool_wear_min":172.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":9085,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.8,"process_temperature_k":311.0,"rotational_speed_rpm":1578.0,"torque_nm":44.4,"tool_wear_min":86.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6118,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.6,"process_temperature_k":310.9,"rotational_speed_rpm":1533.0,"torque_nm":31.8,"tool_wear_min":91.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8147,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.8,"process_temperature_k":311.1,"rotational_speed_rpm":1495.0,"torque_nm":36.9,"tool_wear_min":197.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6755,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":303.6,"process_temperature_k":312.3,"rotational_speed_rpm":1698.0,"torque_nm":31.3,"tool_wear_min":100.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4857,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.2,"process_temperature_k":308.8,"rotational_speed_rpm":1542.0,"torque_nm":39.2,"tool_wear_min":179.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2317,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":300.4,"process_temperature_k":309.8,"rotational_speed_rpm":1448.0,"torque_nm":39.7,"tool_wear_min":107.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3149,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":310.9,"rotational_speed_rpm":1723.0,"torque_nm":31.0,"tool_wear_min":73.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7033,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":295.7,"process_temperature_k":306.3,"rotational_speed_rpm":1490.0,"torque_nm":34.3,"tool_wear_min":97.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":884,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.8,"process_temperature_k":308.8,"rotational_speed_rpm":1421.0,"torque_nm":49.6,"tool_wear_min":101.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":9218,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":300.3,"process_temperature_k":309.5,"rotational_speed_rpm":1665.0,"torque_nm":31.4,"tool_wear_min":32.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3040,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":297.0,"process_temperature_k":307.9,"rotational_speed_rpm":1846.0,"torque_nm":27.3,"tool_wear_min":179.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1156,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":311.0,"rotational_speed_rpm":1759.0,"torque_nm":28.3,"tool_wear_min":13.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7600,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":303.1,"process_temperature_k":312.4,"rotational_speed_rpm":1404.0,"torque_nm":61.5,"tool_wear_min":127.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":5618,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.3,"process_temperature_k":309.2,"rotational_speed_rpm":1364.0,"torque_nm":47.6,"tool_wear_min":45.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":3211,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.1,"process_temperature_k":310.7,"rotational_speed_rpm":2219.0,"torque_nm":16.7,"tool_wear_min":79.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6791,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.1,"process_temperature_k":310.1,"rotational_speed_rpm":1447.0,"torque_nm":46.6,"tool_wear_min":169.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4363,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":303.1,"process_temperature_k":312.4,"rotational_speed_rpm":1378.0,"torque_nm":50.1,"tool_wear_min":104.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":5610,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.6,"process_temperature_k":309.8,"rotational_speed_rpm":1637.0,"torque_nm":34.6,"tool_wear_min":207.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":8440,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.4,"process_temperature_k":308.5,"rotational_speed_rpm":1782.0,"torque_nm":25.9,"tool_wear_min":54.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8794,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":309.9,"rotational_speed_rpm":1815.0,"torque_nm":27.0,"tool_wear_min":190.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6497,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":299.9,"process_temperature_k":311.3,"rotational_speed_rpm":1802.0,"torque_nm":24.4,"tool_wear_min":151.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7822,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":299.7,"process_temperature_k":311.0,"rotational_speed_rpm":1448.0,"torque_nm":49.8,"tool_wear_min":80.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8143,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.5,"process_temperature_k":312.4,"rotational_speed_rpm":1574.0,"torque_nm":32.7,"tool_wear_min":175.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4802,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.8,"process_temperature_k":309.7,"rotational_speed_rpm":1751.0,"torque_nm":29.6,"tool_wear_min":160.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8342,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":303.6,"process_temperature_k":312.7,"rotational_speed_rpm":1403.0,"torque_nm":46.2,"tool_wear_min":57.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":5333,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.1,"process_temperature_k":308.2,"rotational_speed_rpm":1420.0,"torque_nm":63.9,"tool_wear_min":19.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":260,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.1,"process_temperature_k":309.2,"rotational_speed_rpm":1687.0,"torque_nm":27.7,"tool_wear_min":95.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3066,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.7,"process_temperature_k":310.2,"rotational_speed_rpm":1402.0,"torque_nm":45.9,"tool_wear_min":30.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":1350,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":297.4,"process_temperature_k":308.3,"rotational_speed_rpm":1535.0,"torque_nm":34.6,"tool_wear_min":51.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":440,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.2,"process_temperature_k":307.9,"rotational_speed_rpm":1493.0,"torque_nm":38.4,"tool_wear_min":146.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8991,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":299.6,"process_temperature_k":309.1,"rotational_speed_rpm":1588.0,"torque_nm":41.3,"tool_wear_min":0.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2168,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.2,"process_temperature_k":308.9,"rotational_speed_rpm":1278.0,"torque_nm":54.0,"tool_wear_min":18.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":1517,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":298.6,"process_temperature_k":310.2,"rotational_speed_rpm":1668.0,"torque_nm":31.5,"tool_wear_min":7.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1340,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":309.8,"rotational_speed_rpm":1406.0,"torque_nm":48.4,"tool_wear_min":151.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":6482,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.1,"process_temperature_k":311.4,"rotational_speed_rpm":1418.0,"torque_nm":47.7,"tool_wear_min":73.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":7792,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.0,"process_temperature_k":312.2,"rotational_speed_rpm":1602.0,"torque_nm":35.9,"tool_wear_min":67.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7967,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":301.0,"process_temperature_k":310.9,"rotational_speed_rpm":1510.0,"torque_nm":44.5,"tool_wear_min":66.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6202,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.7,"process_temperature_k":312.9,"rotational_speed_rpm":1461.0,"torque_nm":50.1,"tool_wear_min":31.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5235,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.9,"process_temperature_k":310.4,"rotational_speed_rpm":1373.0,"torque_nm":48.0,"tool_wear_min":73.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4152,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":296.6,"process_temperature_k":307.6,"rotational_speed_rpm":1498.0,"torque_nm":41.1,"tool_wear_min":80.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1039,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":303.6,"process_temperature_k":312.6,"rotational_speed_rpm":1498.0,"torque_nm":40.2,"tool_wear_min":155.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4794,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.5,"process_temperature_k":309.4,"rotational_speed_rpm":1443.0,"torque_nm":45.4,"tool_wear_min":70.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":533,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.3,"process_temperature_k":311.1,"rotational_speed_rpm":1605.0,"torque_nm":37.1,"tool_wear_min":160.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7574,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.8,"process_temperature_k":308.6,"rotational_speed_rpm":1593.0,"torque_nm":35.5,"tool_wear_min":175.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2486,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":300.7,"process_temperature_k":312.4,"rotational_speed_rpm":1457.0,"torque_nm":47.2,"tool_wear_min":74.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7881,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":298.8,"process_temperature_k":310.2,"rotational_speed_rpm":1707.0,"torque_nm":27.6,"tool_wear_min":56.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1361,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.7,"process_temperature_k":309.8,"rotational_speed_rpm":1435.0,"torque_nm":48.8,"tool_wear_min":71.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":9785,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.3,"process_temperature_k":308.2,"rotational_speed_rpm":1663.0,"torque_nm":28.4,"tool_wear_min":67.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9933,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.6,"process_temperature_k":310.6,"rotational_speed_rpm":1478.0,"torque_nm":36.6,"tool_wear_min":218.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":3449,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":297.6,"process_temperature_k":308.4,"rotational_speed_rpm":1398.0,"torque_nm":41.9,"tool_wear_min":215.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":331,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.4,"process_temperature_k":308.8,"rotational_speed_rpm":1651.0,"torque_nm":34.1,"tool_wear_min":163.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8833,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.6,"process_temperature_k":309.6,"rotational_speed_rpm":1501.0,"torque_nm":49.8,"tool_wear_min":222.0,"model_score":0.21052631578947367,"review_flag":0,"observed_failure":1,"source_udi":587,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.4,"process_temperature_k":308.3,"rotational_speed_rpm":1473.0,"torque_nm":39.9,"tool_wear_min":184.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":150,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":303.9,"process_temperature_k":313.0,"rotational_speed_rpm":1901.0,"torque_nm":22.5,"tool_wear_min":110.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5184,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.7,"process_temperature_k":309.1,"rotational_speed_rpm":1435.0,"torque_nm":38.8,"tool_wear_min":165.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":656,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":297.3,"process_temperature_k":308.7,"rotational_speed_rpm":1352.0,"torque_nm":53.8,"tool_wear_min":91.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8730,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.5,"process_temperature_k":308.9,"rotational_speed_rpm":1738.0,"torque_nm":24.0,"tool_wear_min":195.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":669,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.6,"process_temperature_k":311.8,"rotational_speed_rpm":1501.0,"torque_nm":44.8,"tool_wear_min":226.0,"model_score":0.7777777777777778,"review_flag":1,"observed_failure":0,"source_udi":8029,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.9,"process_temperature_k":311.0,"rotational_speed_rpm":1669.0,"torque_nm":32.2,"tool_wear_min":191.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3521,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.6,"process_temperature_k":310.4,"rotational_speed_rpm":1556.0,"torque_nm":37.7,"tool_wear_min":122.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7052,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.3,"process_temperature_k":308.9,"rotational_speed_rpm":1799.0,"torque_nm":24.5,"tool_wear_min":137.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8825,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":297.7,"process_temperature_k":309.0,"rotational_speed_rpm":1507.0,"torque_nm":38.2,"tool_wear_min":94.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":706,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.8,"process_temperature_k":311.3,"rotational_speed_rpm":1462.0,"torque_nm":41.4,"tool_wear_min":75.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6954,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.3,"process_temperature_k":307.9,"rotational_speed_rpm":1703.0,"torque_nm":28.9,"tool_wear_min":147.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9966,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":297.9,"process_temperature_k":309.8,"rotational_speed_rpm":1336.0,"torque_nm":71.6,"tool_wear_min":31.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":604,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":309.8,"rotational_speed_rpm":1939.0,"torque_nm":21.4,"tool_wear_min":164.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6487,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":300.2,"process_temperature_k":309.3,"rotational_speed_rpm":1506.0,"torque_nm":35.6,"tool_wear_min":63.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3054,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.5,"process_temperature_k":310.5,"rotational_speed_rpm":1702.0,"torque_nm":28.7,"tool_wear_min":135.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6642,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.2,"process_temperature_k":311.6,"rotational_speed_rpm":1446.0,"torque_nm":47.3,"tool_wear_min":66.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7455,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.5,"process_temperature_k":308.5,"rotational_speed_rpm":1496.0,"torque_nm":42.2,"tool_wear_min":22.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":428,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.0,"process_temperature_k":308.5,"rotational_speed_rpm":1666.0,"torque_nm":31.0,"tool_wear_min":198.0,"model_score":0.08695652173913043,"review_flag":0,"observed_failure":0,"source_udi":9411,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":302.4,"process_temperature_k":311.9,"rotational_speed_rpm":1422.0,"torque_nm":46.4,"tool_wear_min":194.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":5729,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":299.6,"process_temperature_k":310.9,"rotational_speed_rpm":1679.0,"torque_nm":31.2,"tool_wear_min":120.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8160,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.6,"process_temperature_k":312.4,"rotational_speed_rpm":1388.0,"torque_nm":41.9,"tool_wear_min":221.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":4901,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":297.3,"process_temperature_k":308.3,"rotational_speed_rpm":1461.0,"torque_nm":41.5,"tool_wear_min":108.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8653,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":304.3,"process_temperature_k":313.5,"rotational_speed_rpm":1464.0,"torque_nm":36.7,"tool_wear_min":194.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5138,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.0,"process_temperature_k":309.5,"rotational_speed_rpm":1641.0,"torque_nm":30.1,"tool_wear_min":35.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2690,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":311.1,"rotational_speed_rpm":2478.0,"torque_nm":13.4,"tool_wear_min":170.0,"model_score":0.0,"review_flag":0,"observed_failure":1,"source_udi":6991,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.6,"process_temperature_k":308.6,"rotational_speed_rpm":1326.0,"torque_nm":62.4,"tool_wear_min":173.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":9166,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":299.4,"process_temperature_k":308.7,"rotational_speed_rpm":1289.0,"torque_nm":60.5,"tool_wear_min":104.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":2287,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":297.3,"process_temperature_k":308.3,"rotational_speed_rpm":1935.0,"torque_nm":19.3,"tool_wear_min":24.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8941,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":300.5,"process_temperature_k":312.0,"rotational_speed_rpm":1375.0,"torque_nm":43.2,"tool_wear_min":108.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8073,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.0,"process_temperature_k":309.4,"rotational_speed_rpm":1798.0,"torque_nm":25.5,"tool_wear_min":89.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":32,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.0,"process_temperature_k":311.4,"rotational_speed_rpm":1383.0,"torque_nm":49.6,"tool_wear_min":101.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":7802,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":296.7,"process_temperature_k":307.8,"rotational_speed_rpm":1672.0,"torque_nm":32.4,"tool_wear_min":113.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1128,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":301.9,"process_temperature_k":311.0,"rotational_speed_rpm":1432.0,"torque_nm":41.5,"tool_wear_min":51.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":3551,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.8,"process_temperature_k":310.8,"rotational_speed_rpm":1508.0,"torque_nm":38.8,"tool_wear_min":96.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3488,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":301.5,"process_temperature_k":310.4,"rotational_speed_rpm":1378.0,"torque_nm":55.3,"tool_wear_min":109.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":6632,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.3,"process_temperature_k":311.0,"rotational_speed_rpm":1329.0,"torque_nm":51.5,"tool_wear_min":154.0,"model_score":0.015151515151515152,"review_flag":0,"observed_failure":0,"source_udi":3756,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.8,"process_temperature_k":312.3,"rotational_speed_rpm":1535.0,"torque_nm":40.3,"tool_wear_min":71.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7880,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.0,"process_temperature_k":308.2,"rotational_speed_rpm":1365.0,"torque_nm":52.9,"tool_wear_min":218.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":1596,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.6,"process_temperature_k":309.4,"rotational_speed_rpm":1315.0,"torque_nm":55.5,"tool_wear_min":28.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8533,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.2,"process_temperature_k":308.4,"rotational_speed_rpm":1677.0,"torque_nm":26.4,"tool_wear_min":146.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8750,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.0,"process_temperature_k":308.7,"rotational_speed_rpm":1537.0,"torque_nm":42.8,"tool_wear_min":202.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":2587,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":310.6,"rotational_speed_rpm":1407.0,"torque_nm":40.5,"tool_wear_min":87.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":6210,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.8,"process_temperature_k":311.0,"rotational_speed_rpm":1564.0,"torque_nm":38.5,"tool_wear_min":85.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4589,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":299.5,"process_temperature_k":310.8,"rotational_speed_rpm":1754.0,"torque_nm":31.3,"tool_wear_min":114.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9542,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.0,"process_temperature_k":308.2,"rotational_speed_rpm":1466.0,"torque_nm":42.6,"tool_wear_min":2.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":252,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":303.0,"process_temperature_k":312.5,"rotational_speed_rpm":1461.0,"torque_nm":40.2,"tool_wear_min":127.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5455,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.5,"process_temperature_k":310.9,"rotational_speed_rpm":1891.0,"torque_nm":23.2,"tool_wear_min":122.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6729,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.9,"process_temperature_k":312.0,"rotational_speed_rpm":1402.0,"torque_nm":50.7,"tool_wear_min":185.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":8014,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.6,"process_temperature_k":310.6,"rotational_speed_rpm":1549.0,"torque_nm":37.5,"tool_wear_min":199.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":4550,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.5,"process_temperature_k":308.3,"rotational_speed_rpm":1521.0,"torque_nm":38.2,"tool_wear_min":74.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":361,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":309.8,"rotational_speed_rpm":1379.0,"torque_nm":54.2,"tool_wear_min":207.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":3020,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":298.7,"process_temperature_k":308.4,"rotational_speed_rpm":1560.0,"torque_nm":33.3,"tool_wear_min":53.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2021,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.1,"process_temperature_k":308.4,"rotational_speed_rpm":1588.0,"torque_nm":33.4,"tool_wear_min":204.0,"model_score":0.05555555555555555,"review_flag":0,"observed_failure":0,"source_udi":1246,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.6,"process_temperature_k":310.7,"rotational_speed_rpm":1566.0,"torque_nm":38.2,"tool_wear_min":187.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6998,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.2,"process_temperature_k":309.8,"rotational_speed_rpm":1401.0,"torque_nm":49.3,"tool_wear_min":163.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":7151,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":299.7,"process_temperature_k":310.3,"rotational_speed_rpm":1462.0,"torque_nm":40.4,"tool_wear_min":19.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7349,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.3,"process_temperature_k":311.5,"rotational_speed_rpm":1548.0,"torque_nm":32.2,"tool_wear_min":25.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7771,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":295.6,"process_temperature_k":306.0,"rotational_speed_rpm":1363.0,"torque_nm":50.0,"tool_wear_min":14.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":933,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":299.0,"process_temperature_k":308.9,"rotational_speed_rpm":1449.0,"torque_nm":39.6,"tool_wear_min":105.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2040,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":297.5,"process_temperature_k":308.1,"rotational_speed_rpm":1469.0,"torque_nm":44.8,"tool_wear_min":5.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":335,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.6,"process_temperature_k":312.1,"rotational_speed_rpm":1499.0,"torque_nm":35.0,"tool_wear_min":215.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":5490,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.4,"process_temperature_k":308.6,"rotational_speed_rpm":1304.0,"torque_nm":45.0,"tool_wear_min":158.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":223,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.7,"process_temperature_k":310.9,"rotational_speed_rpm":1468.0,"torque_nm":41.8,"tool_wear_min":112.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6044,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.7,"process_temperature_k":310.2,"rotational_speed_rpm":1331.0,"torque_nm":61.2,"tool_wear_min":47.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4141,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":310.1,"rotational_speed_rpm":1598.0,"torque_nm":32.8,"tool_wear_min":79.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6455,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.6,"process_temperature_k":309.0,"rotational_speed_rpm":1372.0,"torque_nm":60.4,"tool_wear_min":149.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":2222,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.0,"process_temperature_k":312.2,"rotational_speed_rpm":1601.0,"torque_nm":33.0,"tool_wear_min":109.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7984,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":303.5,"process_temperature_k":312.0,"rotational_speed_rpm":1397.0,"torque_nm":52.9,"tool_wear_min":80.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":4849,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":299.3,"process_temperature_k":310.0,"rotational_speed_rpm":1373.0,"torque_nm":44.8,"tool_wear_min":221.0,"model_score":0.5555555555555556,"review_flag":1,"observed_failure":0,"source_udi":9496,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":298.4,"process_temperature_k":308.7,"rotational_speed_rpm":1344.0,"torque_nm":52.9,"tool_wear_min":130.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":213,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.3,"process_temperature_k":308.2,"rotational_speed_rpm":1452.0,"torque_nm":38.2,"tool_wear_min":44.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8948,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":297.5,"process_temperature_k":308.4,"rotational_speed_rpm":1633.0,"torque_nm":33.3,"tool_wear_min":213.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":8606,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.6,"process_temperature_k":311.6,"rotational_speed_rpm":1455.0,"torque_nm":48.0,"tool_wear_min":203.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":7931,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.2,"process_temperature_k":310.7,"rotational_speed_rpm":1540.0,"torque_nm":36.3,"tool_wear_min":175.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8268,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.2,"process_temperature_k":308.5,"rotational_speed_rpm":1340.0,"torque_nm":50.0,"tool_wear_min":144.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":2393,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.0,"process_temperature_k":311.5,"rotational_speed_rpm":1451.0,"torque_nm":49.0,"tool_wear_min":115.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7808,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.4,"process_temperature_k":308.8,"rotational_speed_rpm":1325.0,"torque_nm":62.4,"tool_wear_min":204.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":8847,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.8,"process_temperature_k":312.4,"rotational_speed_rpm":1651.0,"torque_nm":27.0,"tool_wear_min":200.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":5382,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.2,"process_temperature_k":308.6,"rotational_speed_rpm":1413.0,"torque_nm":49.8,"tool_wear_min":12.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":8697,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":311.8,"rotational_speed_rpm":1673.0,"torque_nm":30.1,"tool_wear_min":210.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":5736,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.6,"process_temperature_k":309.2,"rotational_speed_rpm":1602.0,"torque_nm":37.3,"tool_wear_min":31.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2179,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":303.5,"process_temperature_k":312.6,"rotational_speed_rpm":1405.0,"torque_nm":51.6,"tool_wear_min":62.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":5334,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.9,"process_temperature_k":307.7,"rotational_speed_rpm":1517.0,"torque_nm":44.4,"tool_wear_min":67.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1863,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.7,"process_temperature_k":309.1,"rotational_speed_rpm":1715.0,"torque_nm":27.8,"tool_wear_min":192.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2754,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.9,"process_temperature_k":311.2,"rotational_speed_rpm":1751.0,"torque_nm":23.8,"tool_wear_min":196.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4631,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":296.3,"process_temperature_k":307.3,"rotational_speed_rpm":1567.0,"torque_nm":31.4,"tool_wear_min":5.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":851,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.2,"process_temperature_k":310.1,"rotational_speed_rpm":1550.0,"torque_nm":38.7,"tool_wear_min":45.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5929,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.4,"process_temperature_k":308.1,"rotational_speed_rpm":1375.0,"torque_nm":50.8,"tool_wear_min":94.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":9943,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.4,"process_temperature_k":308.8,"rotational_speed_rpm":1620.0,"torque_nm":33.4,"tool_wear_min":186.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8765,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.9,"process_temperature_k":310.6,"rotational_speed_rpm":1331.0,"torque_nm":68.6,"tool_wear_min":85.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4072,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":309.8,"rotational_speed_rpm":1550.0,"torque_nm":37.4,"tool_wear_min":148.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2996,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.5,"process_temperature_k":309.2,"rotational_speed_rpm":1804.0,"torque_nm":27.4,"tool_wear_min":215.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":501,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":302.1,"process_temperature_k":310.6,"rotational_speed_rpm":1517.0,"torque_nm":38.9,"tool_wear_min":2.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4124,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":302.3,"process_temperature_k":311.2,"rotational_speed_rpm":1432.0,"torque_nm":42.7,"tool_wear_min":68.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":3895,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":297.8,"process_temperature_k":307.3,"rotational_speed_rpm":1555.0,"torque_nm":35.8,"tool_wear_min":190.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1836,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.5,"process_temperature_k":308.8,"rotational_speed_rpm":1557.0,"torque_nm":36.0,"tool_wear_min":21.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9918,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":297.4,"process_temperature_k":308.7,"rotational_speed_rpm":1349.0,"torque_nm":48.9,"tool_wear_min":120.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8820,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.1,"process_temperature_k":309.5,"rotational_speed_rpm":1660.0,"torque_nm":32.7,"tool_wear_min":57.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3132,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":303.7,"process_temperature_k":312.6,"rotational_speed_rpm":1711.0,"torque_nm":27.6,"tool_wear_min":170.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5207,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":303.7,"process_temperature_k":312.4,"rotational_speed_rpm":1316.0,"torque_nm":59.3,"tool_wear_min":137.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":4873,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":300.6,"process_temperature_k":309.4,"rotational_speed_rpm":1691.0,"torque_nm":28.0,"tool_wear_min":36.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2955,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":297.0,"process_temperature_k":307.8,"rotational_speed_rpm":1579.0,"torque_nm":34.1,"tool_wear_min":94.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":800,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.7,"process_temperature_k":309.8,"rotational_speed_rpm":1284.0,"torque_nm":68.2,"tool_wear_min":111.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4343,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":300.3,"process_temperature_k":309.5,"rotational_speed_rpm":1320.0,"torque_nm":62.2,"tool_wear_min":142.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":2824,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.3,"process_temperature_k":307.8,"rotational_speed_rpm":1330.0,"torque_nm":55.4,"tool_wear_min":114.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":1731,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":301.4,"process_temperature_k":310.7,"rotational_speed_rpm":1536.0,"torque_nm":44.4,"tool_wear_min":96.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3401,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":298.3,"process_temperature_k":309.6,"rotational_speed_rpm":1469.0,"torque_nm":54.8,"tool_wear_min":191.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8518,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":310.4,"rotational_speed_rpm":1666.0,"torque_nm":29.7,"tool_wear_min":125.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4520,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":296.1,"process_temperature_k":307.1,"rotational_speed_rpm":1485.0,"torque_nm":36.0,"tool_wear_min":169.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":994,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.1,"process_temperature_k":307.9,"rotational_speed_rpm":1492.0,"torque_nm":39.4,"tool_wear_min":171.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9000,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":297.5,"process_temperature_k":308.9,"rotational_speed_rpm":1443.0,"torque_nm":43.5,"tool_wear_min":0.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8848,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.9,"process_temperature_k":309.7,"rotational_speed_rpm":1460.0,"torque_nm":42.1,"tool_wear_min":181.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2933,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":310.1,"rotational_speed_rpm":1721.0,"torque_nm":32.3,"tool_wear_min":170.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6326,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.6,"process_temperature_k":310.4,"rotational_speed_rpm":2514.0,"torque_nm":13.4,"tool_wear_min":215.0,"model_score":0.5,"review_flag":0,"observed_failure":0,"source_udi":7087,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":297.4,"process_temperature_k":308.9,"rotational_speed_rpm":1376.0,"torque_nm":39.0,"tool_wear_min":181.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8840,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":296.9,"process_temperature_k":307.5,"rotational_speed_rpm":2721.0,"torque_nm":9.3,"tool_wear_min":18.0,"model_score":0.75,"review_flag":1,"observed_failure":1,"source_udi":1096,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.8,"process_temperature_k":312.9,"rotational_speed_rpm":1514.0,"torque_nm":34.3,"tool_wear_min":180.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5054,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.0,"process_temperature_k":310.4,"rotational_speed_rpm":1895.0,"torque_nm":23.2,"tool_wear_min":161.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4101,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":296.8,"process_temperature_k":307.9,"rotational_speed_rpm":1337.0,"torque_nm":56.5,"tool_wear_min":5.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":765,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":304.2,"process_temperature_k":313.3,"rotational_speed_rpm":1668.0,"torque_nm":35.7,"tool_wear_min":180.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5131,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":302.7,"process_temperature_k":312.2,"rotational_speed_rpm":1350.0,"torque_nm":58.6,"tool_wear_min":2.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":5492,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.9,"process_temperature_k":310.8,"rotational_speed_rpm":1427.0,"torque_nm":47.7,"tool_wear_min":92.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":3486,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.6,"process_temperature_k":310.6,"rotational_speed_rpm":1642.0,"torque_nm":35.1,"tool_wear_min":149.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7400,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":302.0,"process_temperature_k":309.9,"rotational_speed_rpm":1447.0,"torque_nm":42.8,"tool_wear_min":185.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4368,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":311.2,"rotational_speed_rpm":1450.0,"torque_nm":47.9,"tool_wear_min":154.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3838,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.2,"process_temperature_k":308.9,"rotational_speed_rpm":1326.0,"torque_nm":54.4,"tool_wear_min":75.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":1537,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.7,"process_temperature_k":311.2,"rotational_speed_rpm":1521.0,"torque_nm":36.7,"tool_wear_min":130.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5787,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.3,"process_temperature_k":310.9,"rotational_speed_rpm":1412.0,"torque_nm":48.9,"tool_wear_min":28.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":3791,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.6,"process_temperature_k":310.3,"rotational_speed_rpm":1648.0,"torque_nm":30.5,"tool_wear_min":217.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":1,"source_udi":7088,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.9,"process_temperature_k":311.4,"rotational_speed_rpm":1465.0,"torque_nm":39.9,"tool_wear_min":153.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5796,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.0,"process_temperature_k":308.7,"rotational_speed_rpm":1583.0,"torque_nm":32.5,"tool_wear_min":25.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2514,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.7,"process_temperature_k":310.6,"rotational_speed_rpm":1474.0,"torque_nm":37.0,"tool_wear_min":33.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7018,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":297.5,"process_temperature_k":309.3,"rotational_speed_rpm":1563.0,"torque_nm":36.1,"tool_wear_min":100.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":544,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.7,"process_temperature_k":311.0,"rotational_speed_rpm":1700.0,"torque_nm":28.7,"tool_wear_min":19.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6688,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.7,"process_temperature_k":311.0,"rotational_speed_rpm":1378.0,"torque_nm":51.6,"tool_wear_min":130.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":6976,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":310.2,"rotational_speed_rpm":1348.0,"torque_nm":54.8,"tool_wear_min":50.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":6443,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.5,"process_temperature_k":310.7,"rotational_speed_rpm":1589.0,"torque_nm":33.5,"tool_wear_min":5.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9580,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.5,"process_temperature_k":310.4,"rotational_speed_rpm":1427.0,"torque_nm":46.8,"tool_wear_min":179.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":4542,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.9,"process_temperature_k":310.9,"rotational_speed_rpm":1569.0,"torque_nm":32.5,"tool_wear_min":188.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3520,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.7,"process_temperature_k":308.8,"rotational_speed_rpm":1388.0,"torque_nm":45.6,"tool_wear_min":190.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":9172,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.5,"process_temperature_k":309.7,"rotational_speed_rpm":1354.0,"torque_nm":60.8,"tool_wear_min":96.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8479,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":303.4,"process_temperature_k":312.0,"rotational_speed_rpm":1521.0,"torque_nm":35.9,"tool_wear_min":215.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":1,"source_udi":4817,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.6,"process_temperature_k":308.5,"rotational_speed_rpm":1678.0,"torque_nm":34.2,"tool_wear_min":114.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9143,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":298.8,"process_temperature_k":308.2,"rotational_speed_rpm":1450.0,"torque_nm":44.7,"tool_wear_min":14.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2421,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.5,"process_temperature_k":309.3,"rotational_speed_rpm":1675.0,"torque_nm":29.8,"tool_wear_min":72.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":534,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.4,"process_temperature_k":311.1,"rotational_speed_rpm":1397.0,"torque_nm":50.8,"tool_wear_min":189.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":7586,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.9,"process_temperature_k":310.6,"rotational_speed_rpm":1598.0,"torque_nm":35.4,"tool_wear_min":186.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5903,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.0,"process_temperature_k":308.2,"rotational_speed_rpm":1620.0,"torque_nm":35.8,"tool_wear_min":5.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":253,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":298.8,"process_temperature_k":309.8,"rotational_speed_rpm":1437.0,"torque_nm":48.2,"tool_wear_min":164.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":8344,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.8,"process_temperature_k":312.7,"rotational_speed_rpm":1414.0,"torque_nm":41.7,"tool_wear_min":190.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":4975,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.9,"process_temperature_k":312.4,"rotational_speed_rpm":1923.0,"torque_nm":23.9,"tool_wear_min":244.0,"model_score":0.23076923076923078,"review_flag":0,"observed_failure":0,"source_udi":5399,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.2,"process_temperature_k":308.7,"rotational_speed_rpm":1398.0,"torque_nm":38.1,"tool_wear_min":88.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":8729,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.4,"process_temperature_k":310.7,"rotational_speed_rpm":1605.0,"torque_nm":34.2,"tool_wear_min":94.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3400,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":299.7,"process_temperature_k":311.1,"rotational_speed_rpm":1439.0,"torque_nm":44.9,"tool_wear_min":174.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":8178,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.9,"process_temperature_k":311.0,"rotational_speed_rpm":2691.0,"torque_nm":12.1,"tool_wear_min":31.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":4049,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.3,"process_temperature_k":311.5,"rotational_speed_rpm":1794.0,"torque_nm":26.1,"tool_wear_min":7.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5658,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":302.5,"process_temperature_k":312.0,"rotational_speed_rpm":1451.0,"torque_nm":43.2,"tool_wear_min":189.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5560,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":303.1,"process_temperature_k":311.2,"rotational_speed_rpm":1435.0,"torque_nm":40.1,"tool_wear_min":219.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":4641,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.3,"process_temperature_k":311.2,"rotational_speed_rpm":1783.0,"torque_nm":25.6,"tool_wear_min":139.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7566,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":309.6,"rotational_speed_rpm":1366.0,"torque_nm":50.2,"tool_wear_min":219.0,"model_score":0.5555555555555556,"review_flag":1,"observed_failure":0,"source_udi":3026,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.0,"process_temperature_k":309.0,"rotational_speed_rpm":1709.0,"torque_nm":32.1,"tool_wear_min":79.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3059,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":304.0,"process_temperature_k":313.1,"rotational_speed_rpm":1466.0,"torque_nm":39.5,"tool_wear_min":83.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5020,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":300.7,"process_temperature_k":309.5,"rotational_speed_rpm":2007.0,"torque_nm":19.7,"tool_wear_min":2.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2944,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.0,"process_temperature_k":309.7,"rotational_speed_rpm":1551.0,"torque_nm":34.8,"tool_wear_min":207.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":4375,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.3,"process_temperature_k":310.1,"rotational_speed_rpm":1545.0,"torque_nm":36.3,"tool_wear_min":90.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":626,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":302.3,"process_temperature_k":311.7,"rotational_speed_rpm":1540.0,"torque_nm":28.9,"tool_wear_min":149.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5548,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":303.5,"process_temperature_k":312.9,"rotational_speed_rpm":1332.0,"torque_nm":52.9,"tool_wear_min":66.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":5251,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.3,"process_temperature_k":310.8,"rotational_speed_rpm":1377.0,"torque_nm":47.3,"tool_wear_min":22.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":3788,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":298.9,"process_temperature_k":308.5,"rotational_speed_rpm":1534.0,"torque_nm":42.9,"tool_wear_min":121.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2465,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.4,"process_temperature_k":310.8,"rotational_speed_rpm":1490.0,"torque_nm":38.0,"tool_wear_min":168.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5803,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.2,"process_temperature_k":311.5,"rotational_speed_rpm":1481.0,"torque_nm":40.4,"tool_wear_min":93.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3650,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.3,"process_temperature_k":311.1,"rotational_speed_rpm":1647.0,"torque_nm":28.2,"tool_wear_min":140.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5886,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.7,"process_temperature_k":311.2,"rotational_speed_rpm":1399.0,"torque_nm":47.9,"tool_wear_min":80.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":6956,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":298.9,"process_temperature_k":309.8,"rotational_speed_rpm":1353.0,"torque_nm":53.7,"tool_wear_min":71.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":9701,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.2,"process_temperature_k":309.9,"rotational_speed_rpm":1569.0,"torque_nm":31.2,"tool_wear_min":176.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7156,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.6,"process_temperature_k":310.8,"rotational_speed_rpm":1470.0,"torque_nm":41.2,"tool_wear_min":156.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4272,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.9,"process_temperature_k":313.0,"rotational_speed_rpm":1626.0,"torque_nm":31.4,"tool_wear_min":209.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":5222,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.8,"process_temperature_k":309.7,"rotational_speed_rpm":1680.0,"torque_nm":28.2,"tool_wear_min":189.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2936,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":301.0,"process_temperature_k":310.4,"rotational_speed_rpm":1614.0,"torque_nm":31.6,"tool_wear_min":84.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6293,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.8,"process_temperature_k":309.9,"rotational_speed_rpm":1428.0,"torque_nm":42.4,"tool_wear_min":132.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":1298,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.8,"process_temperature_k":307.3,"rotational_speed_rpm":1327.0,"torque_nm":61.0,"tool_wear_min":186.0,"model_score":0.0,"review_flag":0,"observed_failure":1,"source_udi":1834,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":303.0,"process_temperature_k":312.3,"rotational_speed_rpm":1483.0,"torque_nm":38.8,"tool_wear_min":114.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5614,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.8,"process_temperature_k":309.7,"rotational_speed_rpm":1418.0,"torque_nm":46.6,"tool_wear_min":12.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":2869,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":299.6,"process_temperature_k":310.9,"rotational_speed_rpm":1630.0,"torque_nm":29.8,"tool_wear_min":206.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":8192,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.1,"process_temperature_k":308.7,"rotational_speed_rpm":1568.0,"torque_nm":32.9,"tool_wear_min":10.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1514,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.7,"process_temperature_k":310.1,"rotational_speed_rpm":2695.0,"torque_nm":12.6,"tool_wear_min":10.0,"model_score":1.0,"review_flag":1,"observed_failure":0,"source_udi":4303,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":301.4,"process_temperature_k":310.6,"rotational_speed_rpm":1464.0,"torque_nm":48.6,"tool_wear_min":96.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6718,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.3,"process_temperature_k":310.0,"rotational_speed_rpm":1560.0,"torque_nm":40.8,"tool_wear_min":182.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6410,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":301.7,"process_temperature_k":310.1,"rotational_speed_rpm":1743.0,"torque_nm":27.3,"tool_wear_min":210.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":4295,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":304.1,"process_temperature_k":313.2,"rotational_speed_rpm":1452.0,"torque_nm":48.0,"tool_wear_min":126.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5191,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.5,"process_temperature_k":310.3,"rotational_speed_rpm":1551.0,"torque_nm":37.3,"tool_wear_min":168.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4451,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.6,"process_temperature_k":309.5,"rotational_speed_rpm":1325.0,"torque_nm":52.2,"tool_wear_min":127.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":8329,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":303.8,"process_temperature_k":312.7,"rotational_speed_rpm":1555.0,"torque_nm":33.4,"tool_wear_min":128.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4950,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.1,"process_temperature_k":308.6,"rotational_speed_rpm":1354.0,"torque_nm":53.9,"tool_wear_min":207.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":9415,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":297.9,"process_temperature_k":308.1,"rotational_speed_rpm":1531.0,"torque_nm":40.8,"tool_wear_min":2.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1598,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":304.4,"process_temperature_k":313.7,"rotational_speed_rpm":1607.0,"torque_nm":33.5,"tool_wear_min":5.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5145,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.1,"process_temperature_k":308.0,"rotational_speed_rpm":1690.0,"torque_nm":25.6,"tool_wear_min":159.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1148,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.5,"process_temperature_k":310.2,"rotational_speed_rpm":1563.0,"torque_nm":34.8,"tool_wear_min":150.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4443,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.4,"process_temperature_k":310.4,"rotational_speed_rpm":1865.0,"torque_nm":23.9,"tool_wear_min":129.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4522,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.9,"process_temperature_k":312.4,"rotational_speed_rpm":1383.0,"torque_nm":51.4,"tool_wear_min":160.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":5468,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.0,"process_temperature_k":307.7,"rotational_speed_rpm":1492.0,"torque_nm":38.7,"tool_wear_min":202.0,"model_score":0.05555555555555555,"review_flag":0,"observed_failure":0,"source_udi":1916,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.8,"process_temperature_k":310.1,"rotational_speed_rpm":1686.0,"torque_nm":26.9,"tool_wear_min":128.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":6309,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.1,"process_temperature_k":311.2,"rotational_speed_rpm":1519.0,"torque_nm":39.3,"tool_wear_min":155.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4004,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.6,"process_temperature_k":309.6,"rotational_speed_rpm":1563.0,"torque_nm":35.0,"tool_wear_min":21.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9768,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.1,"process_temperature_k":308.2,"rotational_speed_rpm":1399.0,"torque_nm":42.6,"tool_wear_min":194.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":8923,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.8,"process_temperature_k":308.5,"rotational_speed_rpm":1561.0,"torque_nm":46.3,"tool_wear_min":194.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":324,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"H","air_temperature_k":300.5,"process_temperature_k":309.8,"rotational_speed_rpm":1324.0,"torque_nm":72.8,"tool_wear_min":159.0,"model_score":1.0,"review_flag":1,"observed_failure":1,"source_udi":3001,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":300.2,"process_temperature_k":311.6,"rotational_speed_rpm":1608.0,"torque_nm":35.0,"tool_wear_min":212.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":7847,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.2,"process_temperature_k":308.0,"rotational_speed_rpm":1411.0,"torque_nm":42.4,"tool_wear_min":48.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":1938,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.2,"process_temperature_k":308.3,"rotational_speed_rpm":1589.0,"torque_nm":33.2,"tool_wear_min":94.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":287,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.6,"process_temperature_k":311.5,"rotational_speed_rpm":1599.0,"torque_nm":37.0,"tool_wear_min":211.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":3860,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.1,"process_temperature_k":308.5,"rotational_speed_rpm":1455.0,"torque_nm":39.8,"tool_wear_min":145.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2305,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.4,"process_temperature_k":308.3,"rotational_speed_rpm":1318.0,"torque_nm":59.1,"tool_wear_min":22.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":170,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":297.3,"process_temperature_k":308.4,"rotational_speed_rpm":1472.0,"torque_nm":41.3,"tool_wear_min":67.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8800,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":300.7,"process_temperature_k":310.7,"rotational_speed_rpm":1377.0,"torque_nm":46.7,"tool_wear_min":36.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":7019,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":299.0,"process_temperature_k":310.3,"rotational_speed_rpm":1635.0,"torque_nm":34.5,"tool_wear_min":168.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1315,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.9,"process_temperature_k":310.2,"rotational_speed_rpm":1359.0,"torque_nm":56.9,"tool_wear_min":166.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":1314,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":299.4,"process_temperature_k":310.7,"rotational_speed_rpm":1551.0,"torque_nm":41.2,"tool_wear_min":3.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":9579,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":299.6,"process_temperature_k":310.9,"rotational_speed_rpm":1474.0,"torque_nm":39.7,"tool_wear_min":64.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8137,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.4,"process_temperature_k":311.6,"rotational_speed_rpm":1200.0,"torque_nm":76.6,"tool_wear_min":3.0,"model_score":0.3333333333333333,"review_flag":0,"observed_failure":1,"source_udi":7764,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":300.1,"process_temperature_k":309.4,"rotational_speed_rpm":1694.0,"torque_nm":27.4,"tool_wear_min":44.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3126,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":299.6,"process_temperature_k":309.4,"rotational_speed_rpm":1331.0,"torque_nm":46.4,"tool_wear_min":16.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":2089,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.0,"process_temperature_k":311.1,"rotational_speed_rpm":1406.0,"torque_nm":50.5,"tool_wear_min":187.0,"model_score":0.002577319587628866,"review_flag":0,"observed_failure":0,"source_udi":3687,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":298.0,"process_temperature_k":308.3,"rotational_speed_rpm":1544.0,"torque_nm":34.7,"tool_wear_min":213.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":0,"source_udi":1594,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.9,"process_temperature_k":311.0,"rotational_speed_rpm":1642.0,"torque_nm":33.1,"tool_wear_min":126.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3498,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":298.5,"process_temperature_k":308.8,"rotational_speed_rpm":1305.0,"torque_nm":58.7,"tool_wear_min":26.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":9920,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":297.3,"process_temperature_k":308.3,"rotational_speed_rpm":1341.0,"torque_nm":51.9,"tool_wear_min":51.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":9040,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":302.1,"process_temperature_k":311.4,"rotational_speed_rpm":1518.0,"torque_nm":37.4,"tool_wear_min":102.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3654,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"M","air_temperature_k":303.7,"process_temperature_k":312.8,"rotational_speed_rpm":1366.0,"torque_nm":47.3,"tool_wear_min":49.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":5007,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.6,"process_temperature_k":311.4,"rotational_speed_rpm":1738.0,"torque_nm":25.8,"tool_wear_min":128.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3746,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.7,"process_temperature_k":308.5,"rotational_speed_rpm":1469.0,"torque_nm":39.9,"tool_wear_min":67.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":2026,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":297.5,"process_temperature_k":309.5,"rotational_speed_rpm":1668.0,"torque_nm":27.9,"tool_wear_min":240.0,"model_score":0.7142857142857143,"review_flag":1,"observed_failure":0,"source_udi":593,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"H","air_temperature_k":296.9,"process_temperature_k":307.8,"rotational_speed_rpm":1549.0,"torque_nm":35.8,"tool_wear_min":206.0,"model_score":0.046511627906976744,"review_flag":0,"observed_failure":1,"source_udi":1088,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":303.4,"process_temperature_k":311.6,"rotational_speed_rpm":1564.0,"torque_nm":41.9,"tool_wear_min":137.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4699,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":300.6,"process_temperature_k":311.7,"rotational_speed_rpm":1488.0,"torque_nm":47.7,"tool_wear_min":22.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":7696,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":303.7,"process_temperature_k":312.7,"rotational_speed_rpm":1572.0,"torque_nm":37.2,"tool_wear_min":192.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5215,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"M","air_temperature_k":300.5,"process_temperature_k":311.5,"rotational_speed_rpm":1370.0,"torque_nm":56.1,"tool_wear_min":7.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":7692,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":303.0,"process_temperature_k":311.2,"rotational_speed_rpm":1383.0,"torque_nm":44.6,"tool_wear_min":198.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":4632,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":302.6,"process_temperature_k":311.0,"rotational_speed_rpm":1610.0,"torque_nm":39.2,"tool_wear_min":152.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":4270,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":298.4,"process_temperature_k":308.9,"rotational_speed_rpm":1638.0,"torque_nm":32.4,"tool_wear_min":109.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":1551,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":302.9,"process_temperature_k":312.2,"rotational_speed_rpm":1677.0,"torque_nm":30.5,"tool_wear_min":46.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5507,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"L","air_temperature_k":297.1,"process_temperature_k":308.1,"rotational_speed_rpm":1633.0,"torque_nm":33.3,"tool_wear_min":192.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":8922,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":301.2,"process_temperature_k":309.9,"rotational_speed_rpm":1984.0,"torque_nm":19.7,"tool_wear_min":169.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":3258,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"H","air_temperature_k":302.6,"process_temperature_k":312.0,"rotational_speed_rpm":1657.0,"torque_nm":29.3,"tool_wear_min":37.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5504,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-01","source_mode":"replay","grade":"M","air_temperature_k":302.9,"process_temperature_k":312.5,"rotational_speed_rpm":1679.0,"torque_nm":30.9,"tool_wear_min":79.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":0,"source_udi":5437,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-02","source_mode":"replay","grade":"L","air_temperature_k":300.5,"process_temperature_k":309.8,"rotational_speed_rpm":1663.0,"torque_nm":29.1,"tool_wear_min":145.0,"model_score":0.00039674667724657806,"review_flag":0,"observed_failure":1,"source_udi":6479,"model_version":"ai4i-dt-3c478c87b51e"},{"asset_id":"CNC-03","source_mode":"replay","grade":"L","air_temperature_k":301.0,"process_temperature_k":312.2,"rotational_speed_rpm":1264.0,"torque_nm":59.0,"tool_wear_min":57.0,"model_score":0.0,"review_flag":0,"observed_failure":0,"source_udi":7962,"model_version":"ai4i-dt-3c478c87b51e"}],"model":{"features":["air_temperature_k","process_temperature_k","rotational_speed_rpm","torque_nm","tool_wear_min","grade_l","grade_m"],"mean":[300.00992500000007,310.00608750000106,1538.776625,40.007799999999975,108.06875,0.597,0.30275],"scale":[2.002099271858157,1.4863913321678572,180.58279535606192,9.97853203933324,63.22110030233275,0.4905007645254061,0.45944797039488816],"nodes":[{"feature":3,"threshold":2.4995861053466797,"left":1,"right":118},{"feature":3,"threshold":-2.6915582418441772,"left":2,"right":7},{"feature":0,"threshold":2.017919421195984,"left":3,"right":6},{"feature":1,"threshold":-1.2150821089744568,"left":4,"right":5},{"score":0.75},{"score":1.0},{"score":0.0},{"feature":2,"threshold":-0.8764767646789551,"left":8,"right":69},{"feature":0,"threshold":0.7692300975322723,"left":9,"right":36},{"feature":4,"threshold":1.2722216248512268,"left":10,"right":19},{"feature":3,"threshold":2.239026665687561,"left":11,"right":14},{"feature":4,"threshold":1.2405865788459778,"left":12,"right":13},{"score":0.0},{"score":0.1111111111111111},{"feature":2,"threshold":-1.0038421750068665,"left":15,"right":18},{"feature":0,"threshold":0.3696494996547699,"left":16,"right":17},{"score":0.0},{"score":0.6},{"score":1.0},{"feature":3,"threshold":1.3771765232086182,"left":20,"right":29},{"feature":4,"threshold":1.7467467188835144,"left":21,"right":28},{"feature":4,"threshold":1.5569366812705994,"left":22,"right":23},{"score":0.0},{"feature":3,"threshold":1.23186457157135,"left":24,"right":27},{"feature":4,"threshold":1.5806629657745361,"left":25,"right":26},{"score":1.0},{"score":0.0},{"score":1.0},{"score":0.5555555555555556},{"feature":5,"threshold":-0.19775709509849548,"left":30,"right":33},{"feature":3,"threshold":2.0385963916778564,"left":31,"right":32},{"score":0.0},{"score":1.0},{"feature":4,"threshold":1.2959478497505188,"left":34,"right":35},{"score":0.6666666666666666},{"score":1.0},{"feature":1,"threshold":0.5004822760820389,"left":37,"right":48},{"feature":0,"threshold":0.9190728068351746,"left":38,"right":43},{"feature":1,"threshold":0.231374129652977,"left":39,"right":40},{"score":1.0},{"feature":4,"threshold":1.5332103967666626,"left":41,"right":42},{"score":0.0},{"score":1.0},{"feature":0,"threshold":1.0189679563045502,"left":44,"right":47},{"feature":1,"threshold":0.36592818796634674,"left":45,"right":46},{"score":1.0},{"score":0.0},{"score":1.0},{"feature":4,"threshold":1.3513091206550598,"left":49,"right":64},{"feature":1,"threshold":1.3750837445259094,"left":50,"right":59},{"feature":0,"threshold":1.318653404712677,"left":51,"right":58},{"feature":1,"threshold":0.6350363194942474,"left":52,"right":55},{"feature":0,"threshold":1.1188631057739258,"left":53,"right":54},{"score":0.0},{"score":1.0},{"feature":0,"threshold":1.2687057852745056,"left":56,"right":57},{"score":0.015151515151515152},{"score":0.3333333333333333},{"score":1.0},{"feature":1,"threshold":1.5096377730369568,"left":60,"right":63},{"feature":0,"threshold":1.768181562423706,"left":61,"right":62},{"score":0.0},{"score":1.0},{"score":0.0},{"feature":3,"threshold":1.2769613862037659,"left":65,"right":66},{"score":0.3333333333333333},{"feature":5,"threshold":-0.19775709509849548,"left":67,"right":68},{"score":0.6666666666666666},{"score":1.0},{"feature":3,"threshold":2.148833155632019,"left":70,"right":117},{"feature":4,"threshold":1.5253016352653503,"left":71,"right":100},{"feature":3,"threshold":1.7980800867080688,"left":72,"right":93},{"feature":4,"threshold":1.4778491854667664,"left":73,"right":86},{"feature":3,"threshold":-2.4660741090774536,"left":74,"right":79},{"feature":0,"threshold":-1.8280437588691711,"left":75,"right":76},{"score":1.0},{"feature":2,"threshold":3.656070113182068,"left":77,"right":78},{"score":1.0},{"score":0.0},{"feature":4,"threshold":1.414579153060913,"left":80,"right":83},{"feature":2,"threshold":-0.5497568249702454,"left":81,"right":82},{"score":0.002577319587628866},{"score":0.00039674667724657806},{"feature":0,"threshold":-0.779144674539566,"left":84,"right":85},{"score":0.08695652173913043},{"score":0.0},{"feature":2,"threshold":-0.8460198044776917,"left":87,"right":88},{"score":0.6666666666666666},{"feature":2,"threshold":2.4045666456222534,"left":89,"right":92},{"feature":1,"threshold":-1.0468894839286804,"left":90,"right":91},{"score":0.05555555555555555},{"score":0.0},{"score":0.2},{"feature":2,"threshold":-0.474998876452446,"left":94,"right":99},{"feature":4,"threshold":0.86887526512146,"left":95,"right":98},{"feature":3,"threshold":2.0686609745025635,"left":96,"right":97},{"score":0.0},{"score":0.2},{"score":0.6666666666666666},{"score":1.0},{"feature":3,"threshold":1.2669398784637451,"left":101,"right":116},{"feature":4,"threshold":1.841651737689972,"left":102,"right":109},{"feature":0,"threshold":2.092840790748596,"left":103,"right":108},{"feature":2,"threshold":3.9966341257095337,"left":104,"right":107},{"feature":3,"threshold":0.9612836837768555,"left":105,"right":106},{"score":0.046511627906976744},{"score":0.21052631578947367},{"score":0.5},{"score":1.0},{"feature":3,"threshold":0.47022947669029236,"left":110,"right":115},{"feature":2,"threshold":0.1978226974606514,"left":111,"right":112},{"score":0.0},{"feature":5,"threshold":-0.19775709509849548,"left":113,"right":114},{"score":0.7142857142857143},{"score":0.23076923076923078},{"score":0.7777777777777778},{"score":1.0},{"score":1.0},{"feature":2,"threshold":-1.7181959748268127,"left":119,"right":120},{"score":0.3333333333333333},{"feature":6,"threshold":0.4293195605278015,"left":121,"right":122},{"score":1.0},{"feature":3,"threshold":2.785199284553528,"left":123,"right":124},{"score":0.6},{"score":1.0}],"model_version":"ai4i-dt-3c478c87b51e"},"validation":{"model_version":"ai4i-dt-3c478c87b51e","dataset":"UCI AI4I 2020 (synthetic)","dataset_sha256":"53d0e7b71f760829a91ec3a9df54c0f044836074a227fe5be5a06bedd0cb1125","sklearn":"1.8.0","split":{"training_rows":8000,"holdout_rows":2000,"seed":42,"method":"notebook random 80/20 split"},"threshold":0.5,"accuracy":0.983,"failure_precision":0.7213114754098361,"failure_recall":0.7213114754098361,"failure_f1":0.7213114754098361,"average_precision":0.6860142422038796,"confusion":{"true_negative":1922,"false_positive":17,"false_negative":17,"true_positive":44},"portable_parity_rows":2000},"columns":["event_id","asset_id","source_mode","observed_at","ingested_at","grade","air_temperature_k","process_temperature_k","rotational_speed_rpm","torque_nm","tool_wear_min","model_score","review_flag","observed_failure","source_udi","model_version"]}</script>
+<script>
+const datasetMaxBytes = 5_000_000;
+const datasetMaxRows = 10_000;
+const datasetBatchSize = 100;
+const datasetDisplayRows = 100;
+const datasetSample = [
+  "grade,air_temperature_k,process_temperature_k,rotational_speed_rpm,torque_nm,tool_wear_min,asset_id",
+  "L,299.3,310.4,1629,32.6,177,CNC-01",
+  "L,303.6,312.0,1309,52.9,86,CNC-02",
+].join("\r\n") + "\r\n";
+
+function parseCsv(text) {
+  const records = [];
+  let cells = [];
+  let field = "";
+  let quoted = false;
+  let closedQuote = false;
+  let rowNumber = 1;
+
+  function finishField() {
+    if (cells.length >= 256) throw new Error("The CSV can contain up to 256 columns.");
+    cells.push(field);
+    field = "";
+    closedQuote = false;
+  }
+
+  function finishRow() {
+    finishField();
+    if (cells.some((cell) => cell.trim() !== "")) records.push({ cells, rowNumber });
+    if (records.length > datasetMaxRows + 1) throw new Error("The CSV can contain up to 10,000 readings.");
+    cells = [];
+    rowNumber++;
+  }
+
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (quoted) {
+      if (char !== '"') {
+        field += char;
+      } else if (text[index + 1] === '"') {
+        field += '"';
+        index++;
+      } else {
+        quoted = false;
+        closedQuote = true;
+      }
+    } else if (char === ",") {
+      finishField();
+    } else if (char === "\r" || char === "\n") {
+      finishRow();
+      if (char === "\r" && text[index + 1] === "\n") index++;
+    } else if (closedQuote || (char === '"' && field !== "")) {
+      throw new Error("Check the quotes in CSV row " + rowNumber + ".");
+    } else if (char === '"') {
+      quoted = true;
+    } else {
+      field += char;
+    }
+  }
+
+  if (quoted) throw new Error("Close the quoted field in CSV row " + rowNumber + ".");
+  if (field || cells.length || closedQuote) finishRow();
+  return records;
+}
+
+function parseDataset(text, fields, grades) {
+  const [header, ...readings] = parseCsv(text);
+  if (!header) throw new Error("Choose a CSV with headings and at least one reading.");
+
+  const required = ["grade", ...fields.map(({ key }) => key)];
+  const aliases = {
+    type: "grade",
+    product_grade: "grade",
+    air_temperature_c: "air_temperature_k",
+    process_temperature_c: "process_temperature_k",
+    asset: "asset_id",
+  };
+  const columns = new Map();
+  header.cells.forEach((heading, index) => {
+    const normalized = heading.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const name = Object.hasOwn(aliases, normalized) ? aliases[normalized] : normalized;
+    if (name !== "asset_id" && !required.includes(name)) return;
+    if (columns.has(name)) throw new Error("Use only one column for " + name + ".");
+    columns.set(name, { index, celsius: normalized.endsWith("_temperature_c") });
+  });
+
+  const missing = required.filter((name) => !columns.has(name));
+  if (missing.length) throw new Error("Add these CSV columns to continue. " + missing.join(", ") + ".");
+  if (!readings.length) throw new Error("Add at least one reading below the headings.");
+
+  return readings.map(({ cells, rowNumber }) => {
+    const asset = cells[columns.get("asset_id")?.index]?.trim() ?? "";
+    const result = { rowNumber, asset };
+    if (cells.length !== header.cells.length) return { ...result, error: "The number of columns differs from the header." };
+
+    const grade = cells[columns.get("grade").index].trim().toUpperCase();
+    if (!grades.has(grade)) return { ...result, error: "Grade must be H, M, or L." };
+    const features = { grade };
+    for (const { key, label, unit, min, max } of fields) {
+      const column = columns.get(key);
+      const raw = cells[column.index].trim();
+      const value = Number(raw) + (column.celsius ? 273.15 : 0);
+      if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(raw) || !Number.isFinite(value) || value < min || value > max) {
+        return { ...result, error: label + " must be between " + min + " and " + max + " " + unit + "." };
+      }
+      features[key] = value;
+    }
+    return { ...result, features };
+  });
+}
+
+function datasetResultLabel(result) {
+  if (result.error) return "Rejected";
+  return result.review_flag ? "Review" : "Normal score";
+}
+
+function datasetResultCsv(results) {
+  const escapeCell = (value) => {
+    const text = String(value ?? "");
+    const safe = /^\s*[=+@-]/.test(text) || /^[\t\r\n]/.test(text) ? "'" + text : text;
+    return '"' + safe.replaceAll('"', '""') + '"';
+  };
+  const rows = results.map((result) => [
+    result.rowNumber, result.asset, result.model_score, datasetResultLabel(result),
+    result.error || "", result.model_version,
+  ].map(escapeCell).join(","));
+  return ["csv_row,asset_id,model_score,result,detail,model_version", ...rows].join("\r\n") + "\r\n";
+}
+
+function initDatasetUpload(predictBatch) {
+  const dialog = byId("dataset");
+  const fileInput = byId("datasetFile");
+  const status = byId("datasetStatus");
+  const manualFields = byId("scoreForm").elements;
+  const grades = new Set(Array.from(manualFields.namedItem("grade").options, (option) => option.value));
+  const fields = sensorFields.map(([key, label, unit]) => {
+    const control = manualFields.namedItem(key);
+    return { key, label, unit, min: Number(control.min), max: Number(control.max) };
+  });
+  const uploadControls = [fileInput, byId("scoreDataset"), byId("trySample")];
+  let results = [];
+
+  function showResults() {
+    const rejected = results.filter((result) => result.error).length;
+    const flagged = results.filter((result) => result.review_flag).length;
+    set("rowsScored", number.format(results.length - rejected));
+    set("rowsFlagged", number.format(flagged));
+    set("rowsRejected", number.format(rejected));
+    byId("datasetWarning").hidden = flagged === 0;
+
+    const rank = (result) => result.review_flag ? 2 : Number(Boolean(result.error));
+    const visible = [...results].sort((a, b) => rank(b) - rank(a)).slice(0, datasetDisplayRows);
+    const body = byId("datasetRows");
+    body.replaceChildren(...visible.map((result) => {
+      const row = element("tr");
+      row.dataset.review = String(Boolean(result.review_flag));
+      const values = [result.rowNumber, result.asset || "—", percent(result.model_score, 1), datasetResultLabel(result), result.error || "—"];
+      row.append(...values.map((value) => element("td", value)));
+      return row;
+    }));
+    set("datasetLimit", visible.length < results.length
+      ? "Showing 100 results with flagged rows first. Download the CSV for all " + number.format(results.length) + " rows."
+      : "");
+    byId("datasetResults").hidden = false;
+    status.textContent = flagged ? "Scoring complete. " + number.format(flagged) + " flagged for review." : "Scoring complete.";
+    return flagged;
+  }
+
+  async function scoreDataset(sample) {
+    if (fileInput.disabled) return;
+    const alarm = prepareAlarm();
+    results = [];
+    byId("datasetResults").hidden = true;
+    status.dataset.alert = "false";
+    status.textContent = "Reading CSV…";
+    for (const control of uploadControls) control.disabled = true;
+
+    try {
+      let text = datasetSample;
+      if (!sample) {
+        const file = fileInput.files[0];
+        if (!file || !/\.csv$/i.test(file.name)) throw new Error("Choose a .csv file. Save Excel sheets as CSV UTF-8.");
+        if (file.size > datasetMaxBytes) throw new Error("Choose a CSV up to 5 MB.");
+        try {
+          text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
+        } catch {
+          throw new Error("Save your CSV with UTF-8 encoding and try again.");
+        }
+      }
+
+      results = parseDataset(text, fields, grades);
+      const valid = results.filter((result) => !result.error);
+      for (let index = 0; index < valid.length; index += datasetBatchSize) {
+        const batch = valid.slice(index, index + datasetBatchSize);
+        const predictions = await predictBatch(batch.map((row) => row.features));
+        if (!Array.isArray(predictions) || predictions.length !== batch.length) throw new Error("The model returned an incomplete batch. Try scoring the file again.");
+        predictions.forEach((prediction, offset) => Object.assign(batch[offset], prediction));
+        status.textContent = "Scoring readings… " + number.format(index + batch.length) + " / " + number.format(valid.length);
+      }
+      if (showResults()) playAlarm(alarm);
+    } catch (error) {
+      status.textContent = error.message || "The file could not be scored.";
+      status.dataset.alert = "true";
+    } finally {
+      for (const control of uploadControls) control.disabled = false;
+    }
+  }
+
+  byId("openDataset").addEventListener("click", () => dialog.showModal());
+  byId("closeDataset").addEventListener("click", () => dialog.close());
+  byId("datasetForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    scoreDataset(false);
+  });
+  byId("trySample").addEventListener("click", () => scoreDataset(true));
+  byId("downloadSample").addEventListener("click", () => downloadCsv(datasetSample, "maintenance-sample.csv"));
+  byId("exportDataset").addEventListener("click", () => downloadCsv(datasetResultCsv(results), "maintenance-results.csv"));
+}
+
+</script>
+<script>
+const byId = (id) => document.getElementById(id);
+const sourceSelect = byId("source");
+const assetSelect = byId("asset");
+const fixtureNode = byId("previewFixture");
+const fixture = fixtureNode ? JSON.parse(fixtureNode.textContent) : null;
+const pollMs = 4000;
+const state = { source: fixture ? "replay" : null, asset: "", minutes: 15 };
+const sensorFields = [
+  ["air_temperature_k", "Air temperature", "K", 1],
+  ["process_temperature_k", "Process temperature", "K", 1],
+  ["rotational_speed_rpm", "Rotational speed", "rpm", 0],
+  ["torque_nm", "Torque", "N·m", 1],
+  ["tool_wear_min", "Tool wear", "min", 0],
+];
+const windows = { 15: "15 minutes", 60: "1 hour", 1440: "24 hours" };
+const number = new Intl.NumberFormat("en-GB");
+const time = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+const shortTime = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const date = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "2-digit", month: "short" });
+const percent = (value, digits = 0) => Number.isFinite(value) ? (100 * value).toFixed(digits) + "%" : "—";
+const set = (id, value) => { byId(id).textContent = value; };
+
+function element(tag, value, cssClass) {
+  const node = document.createElement(tag);
+  if (value !== undefined) node.textContent = value;
+  if (cssClass) node.className = cssClass;
+  return node;
+}
+
+function svgNode(tag, attributes, value) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [key, item] of Object.entries(attributes)) node.setAttribute(key, item);
+  if (value !== undefined) node.textContent = value;
+  return node;
+}
+
+function relativeAge(seconds) {
+  if (seconds === null) return "—";
+  if (seconds < 60) return seconds + "s ago";
+  if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+  return Math.floor(seconds / 3600) + "h ago";
+}
+
+function drawTrend(snapshot) {
+  const target = byId("trend");
+  if (!snapshot.trend.length) {
+    target.replaceChildren(element("div", "Readings will appear here as the selected source reports.", "empty"));
+    return;
+  }
+  const chart = svgNode("svg", { viewBox: "0 0 780 205", role: "img", "aria-label": "Peak and mean model score by UTC time" });
+  const left = 50, right = 755, top = 12, bottom = 173;
+  const stop = Date.parse(snapshot.now);
+  const start = stop - snapshot.minutes * 60_000;
+  const x = (timestamp) => left + (right - left) * Math.min(1, Math.max(0, (timestamp - start) / (stop - start)));
+  const y = (score) => bottom - score * (bottom - top);
+  for (const value of [0, 0.25, 0.5, 0.75, 1]) {
+    chart.append(
+      svgNode("line", { x1: left, x2: right, y1: y(value), y2: y(value), class: "grid-line" }),
+      svgNode("text", { x: left - 9, y: y(value) + 4, "text-anchor": "end", class: "chart-label" }, percent(value)),
+    );
+  }
+  for (let index = 0; index < 5; index++) {
+    const when = start + (stop - start) * index / 4;
+    const label = snapshot.minutes === 1440 ? date.format(when) + " " + shortTime.format(when) : shortTime.format(when);
+    chart.append(svgNode("text", {
+      x: x(when), y: bottom + 20, "text-anchor": index === 0 ? "start" : index === 4 ? "end" : "middle", class: "chart-label",
+    }, label));
+  }
+  chart.append(svgNode("line", { x1: left, x2: right, y1: y(snapshot.review_threshold), y2: y(snapshot.review_threshold), class: "threshold-line" }));
+  const maxGap = snapshot.minutes === 1440 ? 1_350_000 : 90_000;
+  for (const [key, css] of [["mean", "mean-line"], ["peak", "peak-line"]]) {
+    let previous = null;
+    const path = snapshot.trend.map((bucket) => {
+      const when = Date.parse(bucket.at);
+      const command = previous === null || when - previous > maxGap ? "M" : "L";
+      previous = when;
+      return command + x(when).toFixed(1) + " " + y(bucket[key]).toFixed(1);
+    }).join(" ");
+    chart.append(svgNode("path", { d: path, class: css }));
+  }
+  for (const bucket of snapshot.trend) {
+    const dot = svgNode("circle", {
+      cx: x(Date.parse(bucket.at)), cy: y(bucket.peak), r: bucket.reviews ? 4.5 : 2.3, class: "review-point",
+      fill: bucket.reviews ? "#ffc17a" : "#54dfc4",
+    });
+    if (!bucket.reviews) dot.classList.remove("review-point");
+    dot.append(svgNode("title", {}, shortTime.format(new Date(bucket.at)) + " UTC • Peak " + percent(bucket.peak) + " • " + bucket.reviews + " review readings"));
+    chart.append(dot);
+  }
+  target.replaceChildren(chart);
+}
+
+function drawFleet(snapshot) {
+  const focused = document.activeElement?.dataset?.asset;
+  const container = byId("fleet");
+  const buttons = snapshot.fleet.map((row) => {
+    const button = element("button", undefined, "fleet-row");
+    button.type = "button";
+    button.dataset.asset = row.asset_id;
+    button.dataset.selected = String(state.asset === row.asset_id);
+    button.setAttribute("aria-pressed", button.dataset.selected);
+    const title = element("span", undefined, "fleet-row-top");
+    title.append(element("strong", row.asset_id), element("span", row.review_flag ? "Review" : "Normal score", row.review_flag ? "status review" : "status"));
+    const bar = element("progress", undefined, row.review_flag ? "score-progress review" : "score-progress");
+    bar.max = 1;
+    bar.value = row.model_score;
+    bar.setAttribute("aria-label", "Latest model score");
+    const detail = element("span", undefined, "fleet-row-bottom");
+    detail.append(element("span", time.format(new Date(row.observed_at)) + " UTC"), element("strong", percent(row.model_score, 1)));
+    button.append(title, bar, detail);
+    button.addEventListener("click", () => {
+      state.asset = state.asset === row.asset_id ? "" : row.asset_id;
+      assetSelect.value = state.asset;
+      refresh();
+    });
+    return button;
+  });
+  container.replaceChildren(...(buttons.length ? buttons : [element("div", "Waiting for assets in this source.", "empty")]));
+  if (focused) buttons.find((button) => button.dataset.asset === focused)?.focus({ preventScroll: true });
+  const assets = snapshot.fleet.map((row) => row.asset_id);
+  if (state.asset && !assets.includes(state.asset)) assets.push(state.asset);
+  const options = [new Option("All assets", ""), ...assets.map((asset) => new Option(asset, asset))];
+  const existing = Array.from(assetSelect.options).map((option) => option.value);
+  if (existing.join("\n") !== ["", ...assets].join("\n")) assetSelect.replaceChildren(...options);
+  assetSelect.value = state.asset;
+  set("fleetCount", snapshot.fleet.length + " asset" + (snapshot.fleet.length === 1 ? "" : "s"));
+}
+
+function drawReadings(snapshot) {
+  const rows = snapshot.alerts.map((reading) => {
+    const row = element("tr");
+    const when = new Date(reading.observed_at);
+    const values = [
+      date.format(when) + " " + time.format(when),
+      reading.asset_id, percent(reading.model_score, 1),
+      reading.torque_nm.toFixed(1) + " N·m", number.format(reading.rotational_speed_rpm) + " rpm", reading.tool_wear_min + " min",
+    ];
+    values.forEach((value, index) => row.append(element("td", value, index === 2 ? "score-cell" : "")));
+    return row;
+  });
+  if (!rows.length) {
+    const row = element("tr");
+    const message = element("td", "No review readings in this selection.", "empty");
+    message.colSpan = 6;
+    row.append(message);
+    rows.push(row);
+  }
+  byId("queue").replaceChildren(...rows);
+  const latest = snapshot.latest;
+  const sensorNodes = sensorFields.map(([key, label, unit, decimals]) => {
+    const node = element("div");
+    node.append(element("dt", label), element("dd", latest ? latest[key].toLocaleString("en-GB", {
+      minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+    }) + " " + unit : "—"));
+    return node;
+  });
+  const grade = element("div");
+  grade.append(element("dt", "Product grade"), element("dd", latest?.grade ?? "—"));
+  byId("sensorValues").replaceChildren(...sensorNodes, grade);
+  set("sensorAsset", latest?.asset_id ?? "—");
+  set("sensorTime", latest ? "Observed " + time.format(new Date(latest.observed_at)) + " UTC · Score " + percent(latest.model_score, 1) : "Waiting for a reading.");
+}
+
+function drawValidation(snapshot) {
+  const values = snapshot.validation;
+  const metrics = [
+    ["Accuracy", percent(values.accuracy, 1)],
+    ["Failure precision", percent(values.failure_precision, 1)],
+    ["Failure recall", percent(values.failure_recall, 1)],
+    ["Missed failures", String(values.confusion.false_negative)],
+  ];
+  byId("modelMetrics").replaceChildren(...metrics.map(([label, value]) => {
+    const item = element("div");
+    item.append(element("dt", label), element("dd", value));
+    return item;
+  }));
+  set("modelScope", "AI4I synthetic holdout · " + number.format(values.split.holdout_rows) + " rows");
+  set("modelVersion", snapshot.model_version);
+}
+
+function render(snapshot) {
+  state.source = snapshot.source;
+  sourceSelect.value = snapshot.source;
+  const replay = snapshot.source === "replay";
+  set("sourceTag", replay ? "Synthetic replay" : "Live telemetry");
+  set("contextText", replay
+    ? "Scored AI4I holdout examples on a demo clock. Replay intentionally includes failure examples."
+    : "Readings arrive from the ingestion API. Scores above the review threshold are flagged for inspection.");
+  const summary = snapshot.summary;
+  set("readings", number.format(summary.readings));
+  set("assetCount", number.format(summary.assets));
+  set("reviewCount", number.format(summary.reviews));
+  set("readingsNote", "Last " + windows[snapshot.minutes] + " · " + (state.asset || "all assets"));
+  set("reviewNote", "Score above " + percent(snapshot.review_threshold));
+  const age = summary.last_ingested ? Math.max(0, Math.floor((Date.parse(snapshot.now) - Date.parse(summary.last_ingested)) / 1000)) : null;
+  set("lastReceived", relativeAge(age));
+  set("receivedNote", summary.last_ingested ? time.format(new Date(summary.last_ingested)) + " UTC" : "Waiting for this source");
+  set("feedLabel", age === null ? "Awaiting readings" : age > 60 ? "Feed delayed" : replay ? "Replay running" : "Feed active");
+  byId("feedSignal").dataset.state = age === null ? "idle" : age > 60 ? "late" : "active";
+  set("trendNote", (snapshot.minutes === 1440 ? "15-minute" : "1-minute") + " buckets · UTC · Review boundary " + percent(snapshot.review_threshold));
+  byId("connectionError").hidden = true;
+  drawTrend(snapshot);
+  drawFleet(snapshot);
+  drawReadings(snapshot);
+  drawValidation(snapshot);
+}
+
+const previewRows = [];
+let previewIndex = 0;
+let lastReplayTime = 0;
+
+function previewRecord(timestamp) {
+  const row = fixture.rows[previewIndex % fixture.rows.length];
+  const at = new Date(timestamp).toISOString();
+  previewIndex++;
+  return { ...row, observed_at: at, ingested_at: at, event_id: "preview-" + previewIndex };
+}
+
+function previewSnapshot() {
+  const now = Date.now();
+  if (previewIndex === 0) {
+    for (let index = 89; index >= 0; index--) previewRows.push(previewRecord(now - 2000 - index * 10_000));
+    lastReplayTime = now;
+  } else if (now - lastReplayTime >= pollMs) {
+    previewRows.push(previewRecord(now));
+    lastReplayTime = now;
+  }
+  while (previewRows.length && Date.parse(previewRows[0].observed_at) < now - 86_400_000) previewRows.shift();
+  const cutoff = now - state.minutes * 60_000;
+  const history = previewRows.filter((row) => Date.parse(row.observed_at) >= cutoff);
+  const selected = history.filter((row) => !state.asset || row.asset_id === state.asset);
+  const fleet = new Map(history.map((row) => [row.asset_id, row]));
+  const reviews = selected.filter((row) => row.review_flag);
+  const bucketSize = state.minutes === 1440 ? 900_000 : 60_000;
+  const buckets = new Map();
+  for (const row of selected) {
+    const bucket = Math.floor(Date.parse(row.observed_at) / bucketSize) * bucketSize;
+    if (!buckets.has(bucket)) buckets.set(bucket, { at: new Date(bucket).toISOString(), peak: 0, sum: 0, readings: 0, reviews: 0 });
+    const point = buckets.get(bucket);
+    point.peak = Math.max(point.peak, row.model_score);
+    point.sum += row.model_score;
+    point.readings++;
+    point.reviews += row.review_flag;
+  }
+  return {
+    source: "replay", minutes: state.minutes, now: new Date(now).toISOString(),
+    summary: { readings: selected.length, assets: new Set(selected.map((row) => row.asset_id)).size, reviews: reviews.length, last_ingested: selected.at(-1)?.ingested_at },
+    fleet: [...fleet.values()].sort((first, second) => first.asset_id.localeCompare(second.asset_id)),
+    alerts: reviews.slice(-12).reverse(),
+    trend: [...buckets.values()].map((point) => ({ ...point, mean: point.sum / point.readings })),
+    latest: selected.at(-1),
+    review_threshold: fixture.validation.threshold,
+    validation: fixture.validation,
+    model_version: fixture.validation.model_version,
+  };
+}
+
+function params() {
+  const query = new URLSearchParams({ minutes: String(state.minutes) });
+  if (state.source) query.set("source", state.source);
+  if (state.asset) query.set("asset", state.asset);
+  return query;
+}
+
+let refreshTimer;
+let refreshSequence = 0;
+let controller;
+async function refresh() {
+  clearTimeout(refreshTimer);
+  controller?.abort();
+  controller = new AbortController();
+  const sequence = ++refreshSequence;
+  try {
+    let snapshot;
+    if (fixture) snapshot = previewSnapshot();
+    else {
+      const response = await fetch("/api/snapshot?" + params(), { signal: controller.signal, cache: "no-store" });
+      if (!response.ok) throw new Error("The monitoring service returned " + response.status + ".");
+      snapshot = await response.json();
+    }
+    if (sequence === refreshSequence) render(snapshot);
+  } catch (error) {
+    if (sequence === refreshSequence && error.name !== "AbortError") {
+      set("feedLabel", "Feed unavailable");
+      byId("feedSignal").dataset.state = "error";
+      set("connectionError", "The latest readings could not be loaded. Reconnecting automatically.");
+      byId("connectionError").hidden = false;
+    }
+  } finally {
+    if (sequence === refreshSequence) refreshTimer = setTimeout(refresh, pollMs);
+  }
+}
+
+function downloadPreview() {
+  const cutoff = Date.now() - state.minutes * 60_000;
+  const rows = previewRows.filter((row) => Date.parse(row.observed_at) >= cutoff && (!state.asset || row.asset_id === state.asset));
+  const csv = [fixture.columns.join(","), ...rows.map((row) => fixture.columns.map((column) => row[column] ?? "").join(","))].join("\r\n") + "\r\n";
+  downloadCsv(csv, "maintenance-replay.csv");
+}
+
+function downloadCsv(csv, filename) {
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = element("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function scorePreview(features) {
+  const model = fixture.model;
+  const values = { ...features, grade_l: Number(features.grade === "L"), grade_m: Number(features.grade === "M") };
+  const scaled = model.features.map((key, index) => Math.fround((values[key] - model.mean[index]) / model.scale[index]));
+  let node = model.nodes[0];
+  while ("feature" in node) node = model.nodes[scaled[node.feature] <= node.threshold ? node.left : node.right];
+  const review = node.score > fixture.validation.threshold;
+  return {
+    model_score: node.score, review_flag: Number(review), status: review ? "Review" : "Normal score",
+    model_version: model.model_version,
+  };
+}
+
+async function postJson(path, body) {
+  const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "The scoring service returned " + response.status + ".");
+  return result;
+}
+
+async function scoreBatch(readings) {
+  if (fixture) return readings.map(scorePreview);
+  const result = await postJson("/api/score-batch", { readings });
+  return result.predictions;
+}
+
+let alarmAudio;
+function prepareAlarm() {
+  if (!byId("alarmEnabled").checked) return Promise.resolve(null);
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    alarmAudio ??= new Audio();
+    if (alarmAudio.state === "running") return Promise.resolve(alarmAudio);
+    return alarmAudio.resume().then(() => alarmAudio, () => null);
+  } catch {
+    return Promise.resolve(null);
+  }
+}
+
+function playAlarm(ready) {
+  void ready.then((audio) => {
+    if (audio?.state !== "running" || !byId("alarmEnabled").checked) return;
+    const start = audio.currentTime;
+    [760, 940].forEach((frequency, index) => {
+      const when = start + index * 0.22;
+      const tone = audio.createOscillator();
+      const volume = audio.createGain();
+      tone.frequency.value = frequency;
+      volume.gain.setValueAtTime(0.001, when);
+      volume.gain.exponentialRampToValueAtTime(0.13, when + 0.015);
+      volume.gain.exponentialRampToValueAtTime(0.001, when + 0.17);
+      tone.connect(volume).connect(audio.destination);
+      tone.start(when);
+      tone.stop(when + 0.18);
+    });
+  }).catch(() => {});
+}
+
+sourceSelect.disabled = Boolean(fixture);
+sourceSelect.addEventListener("change", () => {
+  state.source = sourceSelect.value;
+  state.asset = "";
+  refresh();
+});
+assetSelect.addEventListener("change", () => {
+  state.asset = assetSelect.value;
+  refresh();
+});
+for (const button of document.querySelectorAll("[data-minutes]")) {
+  button.addEventListener("click", () => {
+    state.minutes = Number(button.dataset.minutes);
+    for (const other of document.querySelectorAll("[data-minutes]")) other.setAttribute("aria-pressed", String(other === button));
+    refresh();
+  });
+}
+byId("exportCsv").addEventListener("click", () => {
+  if (fixture) downloadPreview();
+  else window.location.assign("/api/telemetry.csv?" + params());
+});
+byId("openScorer").addEventListener("click", () => byId("scorer").showModal());
+byId("closeScorer").addEventListener("click", () => byId("scorer").close());
+byId("scoreForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const alarm = prepareAlarm();
+  const fields = new FormData(event.target);
+  const features = { grade: fields.get("grade") };
+  for (const [key] of sensorFields) features[key] = Number(fields.get(key));
+  const result = byId("scoreResult");
+  try {
+    const prediction = fixture ? scorePreview(features) : await postJson("/api/score", features);
+    result.textContent = prediction.status + " · " + percent(prediction.model_score, 1);
+    result.dataset.alert = String(Boolean(prediction.review_flag));
+    if (prediction.review_flag) playAlarm(alarm);
+  } catch (error) {
+    result.textContent = error.message || "Scoring is unavailable.";
+    result.dataset.alert = "true";
+  }
+});
+initDatasetUpload(scoreBatch);
+refresh();
+
+</script>
+</body>
+</html>

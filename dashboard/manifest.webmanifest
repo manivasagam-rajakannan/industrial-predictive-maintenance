@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "Maintenance Watch",
+  "short_name": "Maintenance Watch",
+  "description": "Review and score machine readings for predictive maintenance.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#09111d",
+  "theme_color": "#0d1726",
+  "icons": [
+    {"src": "./app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "./app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

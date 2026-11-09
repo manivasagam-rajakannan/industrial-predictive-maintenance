@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "545bb365385c0e8b6e9b",
+  "position": {
+    "x": 32,
+    "y": 860,
+    "z": 11,
+    "width": 1376,
+    "height": 32,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "OFFLINE VALIDATION  ·  98.3% accuracy  ·  72.1% failure recall  ·  17 missed failures  ·  AI4I synthetic holdout",
+                    "textStyle": {
+                      "color": "#A9BED2",
+                      "fontSize": "10pt",
+                      "fontFamily": "Segoe UI",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

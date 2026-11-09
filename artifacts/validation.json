@@ -1,0 +1,25 @@
+{
+  "model_version": "ai4i-dt-3c478c87b51e",
+  "dataset": "UCI AI4I 2020 (synthetic)",
+  "dataset_sha256": "53d0e7b71f760829a91ec3a9df54c0f044836074a227fe5be5a06bedd0cb1125",
+  "sklearn": "1.8.0",
+  "split": {
+    "training_rows": 8000,
+    "holdout_rows": 2000,
+    "seed": 42,
+    "method": "notebook random 80/20 split"
+  },
+  "threshold": 0.5,
+  "accuracy": 0.983,
+  "failure_precision": 0.7213114754098361,
+  "failure_recall": 0.7213114754098361,
+  "failure_f1": 0.7213114754098361,
+  "average_precision": 0.6860142422038796,
+  "confusion": {
+    "true_negative": 1922,
+    "false_positive": 17,
+    "false_negative": 17,
+    "true_positive": 44
+  },
+  "portable_parity_rows": 2000
+}
