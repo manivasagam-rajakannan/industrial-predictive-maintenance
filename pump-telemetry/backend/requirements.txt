@@ -1,0 +1,12 @@
+fastapi==0.141.1
+uvicorn==0.52.1
+numpy==2.3.5
+pandas==2.2.3
+scikit-learn==1.8.0
+psycopg[binary]==3.3.8
+pypdf==6.21.4
+langchain-community==0.4.1
+langchain-core==1.8.0
+faiss-cpu==1.13.2
+groq==1.7.0
+httpx[socks]==0.28.1

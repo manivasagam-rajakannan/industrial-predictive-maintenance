@@ -1,0 +1,4 @@
+defusedxml==0.7.1
+pdfplumber==0.11.9
+pyarrow==26.0.1
+python-calamine==0.9.1

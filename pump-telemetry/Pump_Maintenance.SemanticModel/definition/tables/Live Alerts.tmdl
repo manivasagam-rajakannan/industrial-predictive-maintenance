@@ -1,0 +1,48 @@
+table 'Live Alerts'
+	lineageTag: dd1233f5-6d95-5dec-a166-9d5436c48636
+
+	column 'Reading ID'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: reading_id
+		lineageTag: 4ccf6d03-5baa-5917-85b0-a5f15e7dc372
+		formatString: #,##0
+		isHidden
+
+	column 'Alert Time IST'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: alert_time_ist
+		lineageTag: b1a6e4a0-e015-53fb-ac72-b8543abb54ce
+		formatString: HH:mm:ss
+
+	column 'Suspected Fault'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: suspected_fault
+		lineageTag: 533d1a46-765f-5036-acd9-cbfab1ba33a1
+
+	column 'Fault Score'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fault_score
+		lineageTag: 474bd331-c2e7-5ec5-89e5-62a4fa5d6a4d
+		formatString: 0.0%
+
+	column 'Review Cue'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: review_cue
+		lineageTag: fc1cd881-f3d1-562a-a479-11b5d310a286
+
+	partition 'Live Alerts' = m
+		mode: directQuery
+		source =
+			let
+				Source = PostgreSQL.Database(PumpPostgresServer, PumpPostgresDatabase),
+				Navigation = Source{[Schema="public", Item="powerbi_alerts"]}[Data]
+			in
+				Navigation
+
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Table

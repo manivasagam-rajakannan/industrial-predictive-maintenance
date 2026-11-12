@@ -1,0 +1,62 @@
+table 'Live Readings'
+	lineageTag: 50ad44d0-805d-57d9-90cb-f6e29948c857
+
+	measure 'Live Fault Score' = MAX('Live Readings'[Fault Score])
+		lineageTag: 407fc01a-03c3-578a-bcee-6cf0edd74d77
+		formatString: 0.0%
+
+	measure 'Live Alert Cutoff' = MAX('Live Readings'[Score Cutoff])
+		lineageTag: 98c0011b-d89e-55d5-b750-4a5bf55b515c
+		formatString: 0.0%
+
+	measure 'Live Alert Count' = COALESCE(SUM('Live Readings'[Anomaly Flag]), 0)
+		lineageTag: 28eb08d0-d64a-5fcd-8404-a5c26fdbf141
+		formatString: #,##0
+
+	column 'Reading ID'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: reading_id
+		lineageTag: 9ae5d0c1-4b4e-5686-b43e-80b07fa47f00
+		formatString: #,##0
+		isHidden
+
+	column 'Reading Time IST'
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: reading_time_ist
+		lineageTag: c23a13de-b418-58c5-a17a-fe016f51304c
+		formatString: HH:mm:ss
+
+	column 'Fault Score'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fault_score
+		lineageTag: a5d9bb3e-5237-53d0-8e44-87ee319605cc
+		formatString: 0.0%
+
+	column 'Score Cutoff'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: alert_cutoff
+		lineageTag: 42a7de7f-5b91-59b7-a672-d21b2d25dc4d
+		formatString: 0.0%
+
+	column 'Anomaly Flag'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: anomaly_flag
+		lineageTag: fafca24b-99e5-5841-8991-62585f7a159d
+		formatString: 0
+
+	partition 'Live Readings' = m
+		mode: directQuery
+		source =
+			let
+				Source = PostgreSQL.Database(PumpPostgresServer, PumpPostgresDatabase),
+				Navigation = Source{[Schema="public", Item="powerbi_readings"]}[Data]
+			in
+				Navigation
+
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Table

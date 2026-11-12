@@ -1,0 +1,36 @@
+{
+  "readings": 5000,
+  "flagged_minutes": 197,
+  "alert_cutoff": 0.4,
+  "injected_fault_minutes": 200,
+  "split_readings": {
+    "Training": 3000,
+    "Calibration": 1000,
+    "Holdout": 1000
+  },
+  "holdout": {
+    "readings": 1000,
+    "true_positive": 32,
+    "false_positive": 0,
+    "false_negative": 1,
+    "true_negative": 967,
+    "precision": 1.0,
+    "recall": 0.9696969696969697,
+    "f1": 0.9846153846153847,
+    "false_alarm_rate": 0.0,
+    "by_injected_fault": {
+      "Bearing wear": {
+        "injected": 7,
+        "detected": 7
+      },
+      "Overheating": {
+        "injected": 15,
+        "detected": 14
+      },
+      "Cavitation": {
+        "injected": 11,
+        "detected": 11
+      }
+    }
+  }
+}

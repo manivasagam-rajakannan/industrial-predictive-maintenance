@@ -1,0 +1,99 @@
+table 'Live Status'
+	lineageTag: fd58bee9-38be-5225-b187-2fe252dce53f
+
+	measure 'Feed Status' = SELECTEDVALUE('Live Status'[Feed State], "Waiting for feed")
+		lineageTag: bd1447f1-7e12-5990-8643-f8013309d800
+
+	measure 'Feed Status Color' = SWITCH([Feed Status], "Recent alert", "#BE531E", "Feed paused", "#607789", "Waiting for feed", "#607789", "#07666D")
+		lineageTag: 3ec06dbb-8c7c-52c3-9dda-e793791dbe38
+		isHidden
+
+	measure 'Last Reading Clock' = SELECTEDVALUE('Live Status'[Clock IST], "—")
+		lineageTag: 07a46950-cb71-5069-a173-4ab826f54400
+
+	measure 'Current Fault Score' = MAX('Live Status'[Fault Score])
+		lineageTag: 27f969d6-10c3-50c3-a98b-6be56684e69b
+		formatString: 0.0%
+
+	measure 'Current Vibration' = MAX('Live Status'[Vibration])
+		lineageTag: 145c9375-112c-5d0e-a267-c0adbd5ec8f1
+		formatString: 0.00
+
+	measure 'Current Temperature' = MAX('Live Status'[Temperature])
+		lineageTag: ecc43226-196a-58a9-8c0c-3fdd7960e7f1
+		formatString: 0.0
+
+	measure 'Current Pressure' = MAX('Live Status'[Pressure])
+		lineageTag: 27919fc7-3334-58dd-ab04-0f5e7477c2a8
+		formatString: 0.00
+
+	measure 'Current Motor Current' = MAX('Live Status'[Motor Current])
+		lineageTag: 19b65e17-2ddf-5d52-be5c-73c52d9a071c
+		formatString: 0.0
+
+	column 'Feed State'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: feed_state
+		lineageTag: 00bbe3dd-e715-5662-b0cf-8d9d9d96c8b5
+
+	column 'Clock IST'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: reading_clock_ist
+		lineageTag: c60cc929-393d-50b0-adec-977f3bc5db12
+
+	column 'Reading ID'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: reading_id
+		lineageTag: db13eb53-3d3a-5bc9-bdd3-f9ba5bb255dd
+		formatString: #,##0
+		isHidden
+
+	column Vibration
+		dataType: double
+		summarizeBy: none
+		sourceColumn: vibration_mm_s
+		lineageTag: 09d32279-b82a-5a65-a0bd-e25dd34e60fa
+		formatString: 0.00
+
+	column Temperature
+		dataType: double
+		summarizeBy: none
+		sourceColumn: temperature_c
+		lineageTag: b8b41fe1-cf51-59e1-8ee3-fb1d539b9be1
+		formatString: 0.0
+
+	column Pressure
+		dataType: double
+		summarizeBy: none
+		sourceColumn: pressure_bar
+		lineageTag: d420188b-84a8-5e66-9a1f-d30768bd3724
+		formatString: 0.00
+
+	column 'Motor Current'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: motor_current_amp
+		lineageTag: db9845e8-de94-5b7f-a335-85d435b4c65d
+		formatString: 0.0
+
+	column 'Fault Score'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fault_score
+		lineageTag: 0b98d22f-f75b-5ef9-85f6-78fe197cadf0
+		formatString: 0.0%
+
+	partition 'Live Status' = m
+		mode: directQuery
+		source =
+			let
+				Source = PostgreSQL.Database(PumpPostgresServer, PumpPostgresDatabase),
+				Navigation = Source{[Schema="public", Item="powerbi_latest"]}[Data]
+			in
+				Navigation
+
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Table

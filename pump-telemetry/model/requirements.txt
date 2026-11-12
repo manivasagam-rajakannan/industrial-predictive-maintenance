@@ -1,0 +1,7 @@
+numpy==2.3.5
+pandas==2.2.3
+scikit-learn==1.8.0
+matplotlib==3.10.8
+psycopg[binary]==3.3.8
+pgserver==0.1.4
+fasteners==0.20

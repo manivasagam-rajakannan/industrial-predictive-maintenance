@@ -1,0 +1,16 @@
+.git
+.env
+.runtime
+.venv
+**/__pycache__
+**/.pbi
+**/*.ipynb
+*.pbip
+*.twb
+*.gif
+*.png
+*.Report
+*.SemanticModel
+data
+original
+licenses

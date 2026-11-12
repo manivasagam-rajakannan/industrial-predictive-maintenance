@@ -1,0 +1,39 @@
+{
+  "name": "PumpMonitoring-4b192d86.json",
+  "dataColors": [
+    "#087E80",
+    "#BE531E",
+    "#4263A8",
+    "#7854A3",
+    "#648691",
+    "#AD713F"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#163345",
+  "tableAccent": "#087E80",
+  "good": "#087E80",
+  "neutral": "#4263A8",
+  "bad": "#BE531E",
+  "textClasses": {
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 11,
+      "color": "#466171"
+    },
+    "callout": {
+      "fontFace": "Segoe UI",
+      "fontSize": 31,
+      "color": "#07666D"
+    },
+    "title": {
+      "fontFace": "Segoe UI",
+      "fontSize": 14,
+      "color": "#163345"
+    },
+    "header": {
+      "fontFace": "Segoe UI",
+      "fontSize": 11,
+      "color": "#163345"
+    }
+  }
+}

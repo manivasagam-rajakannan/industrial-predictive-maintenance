@@ -1,6 +1,9 @@
-.env
-runtime/
-__pycache__/
-*.pyc
-**/.pbi/localSettings.json
-**/.pbi/cache.abf
+**/.runtime/
+**/runtime/
+**/.venv/
+**/.pbi/
+**/__pycache__/
+**/.ipynb_checkpoints/
+**/.env
+**/secrets.toml
+.DS_Store

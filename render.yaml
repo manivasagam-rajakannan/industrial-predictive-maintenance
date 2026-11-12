@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: pump-telemetry-copilot
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: .
+    dockerfilePath: ./pump-telemetry/deploy/Dockerfile
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: PUMP_DB_HOST
+        fromDatabase:
+          name: maintenance-portfolio-db
+          property: host
+      - key: PUMP_DB_PORT
+        fromDatabase:
+          name: maintenance-portfolio-db
+          property: port
+      - key: PUMP_DB_OWNER_PASSWORD
+        fromDatabase:
+          name: maintenance-portfolio-db
+          property: password
+      - key: PUMP_DB_SSLMODE
+        value: require
+      - key: PUMP_DB_READER_PASSWORD
+        generateValue: true
+      - key: PUMP_UPLOAD_TOKEN
+        generateValue: true
+      - key: PUMP_SIMULATOR_ENABLED
+        value: "0"
+
+  - type: web
+    name: maintenance-watch-live
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: .
+    dockerfilePath: ./maintenance-watch/Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: MAINTENANCE_DATABASE_URL
+        fromDatabase:
+          name: maintenance-portfolio-db
+          property: connectionString
+      - key: MAINTENANCE_BI_PASSWORD
+        generateValue: true
+      - key: MAINTENANCE_INGEST_TOKEN
+        generateValue: true
+
+databases:
+  - name: maintenance-portfolio-db
+    databaseName: pump_live
+    user: pump_owner
+    plan: free
+    region: singapore
+    postgresMajorVersion: "16"
+    ipAllowList: []

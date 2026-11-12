@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: maintenance_writer
+      POSTGRES_DB: maintenance
+      POSTGRES_PASSWORD: "${MAINTENANCE_DB_PASSWORD:-maintenance_local_writer}"
+      MAINTENANCE_BI_PASSWORD: "${MAINTENANCE_BI_PASSWORD:-maintenance_local_reader}"
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - telemetry-data:/var/lib/postgresql/data
+      - ./storage_schema.sql:/opt/maintenance/storage_schema.sql:ro
+      - ./postgres/powerbi.sql:/opt/maintenance/powerbi.sql:ro
+      - ./postgres/10-monitor.sh:/docker-entrypoint-initdb.d/10-monitor.sh:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "maintenance_writer", "-d", "maintenance"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+  monitor:
+    build:
+      context: ..
+      dockerfile: maintenance-watch/Dockerfile
+    environment:
+      MAINTENANCE_DATABASE_URL: "host=db port=5432 dbname=maintenance user=maintenance_writer"
+      PGPASSWORD: "${MAINTENANCE_DB_PASSWORD:-maintenance_local_writer}"
+      MAINTENANCE_INGEST_TOKEN: "${MAINTENANCE_INGEST_TOKEN:-}"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+volumes:
+  telemetry-data:

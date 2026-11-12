@@ -1,0 +1,4 @@
+-r backend/requirements.txt
+-r frontend/requirements.txt
+pgserver==0.1.4
+fasteners==0.20

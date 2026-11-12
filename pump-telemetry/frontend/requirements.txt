@@ -1,0 +1,5 @@
+-r ../../upload-requirements.txt
+streamlit==1.54.0
+pandas==2.2.3
+altair==6.3.0
+requests==2.34.2

@@ -1,0 +1,66 @@
+name: pump-telemetry-copilot
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pump_live
+      POSTGRES_USER: pump_owner
+      POSTGRES_PASSWORD: ${PUMP_DB_OWNER_PASSWORD:-local_pump_owner_demo}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - pump_database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  backend:
+    build:
+      context: ..
+      dockerfile: pump-telemetry/Dockerfile
+      target: backend
+    environment:
+      PUMP_DB_HOST: postgres
+      PUMP_DB_PORT: "5432"
+      PUMP_DB_OWNER_PASSWORD: ${PUMP_DB_OWNER_PASSWORD:-local_pump_owner_demo}
+      PUMP_DB_READER_PASSWORD: ${PUMP_DB_READER_PASSWORD:-local_pump_reader_demo}
+      PUMP_SIMULATOR_ENABLED: ${PUMP_SIMULATOR_ENABLED:-1}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 25s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: pump-telemetry/Dockerfile
+      target: frontend
+    environment:
+      PUMP_API_URL: http://backend:8000
+      PUMP_PUBLIC_API_URL: http://127.0.0.1:8000
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pump_database:

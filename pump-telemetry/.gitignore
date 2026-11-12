@@ -1,0 +1,8 @@
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+**/.pbi/unappliedChanges.json
+**/__pycache__/
+**/.ipynb_checkpoints/
+.venv/
+.runtime/
+.env

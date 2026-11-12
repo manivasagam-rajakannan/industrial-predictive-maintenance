@@ -1,0 +1,245 @@
+{
+  "name": "MaintenanceWatch",
+  "compatibilityLevel": 1601,
+  "model": {
+    "culture": "en-US",
+    "sourceQueryCulture": "en-US",
+    "defaultMode": "directQuery",
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "tables": [
+      {
+        "name": "Telemetry",
+        "description": "Scored readings over the most recent 24 hours. Filter Data source to isolate replay or live telemetry.",
+        "lineageTag": "7d050af0-1bbe-5fd9-9c73-1d740f8fed81",
+        "columns": [
+          {
+            "name": "Event ID",
+            "dataType": "string",
+            "sourceColumn": "event_id",
+            "summarizeBy": "none",
+            "lineageTag": "acdc40a8-419c-528a-9b19-11e81c88e2d8"
+          },
+          {
+            "name": "Asset",
+            "dataType": "string",
+            "sourceColumn": "asset_id",
+            "summarizeBy": "none",
+            "lineageTag": "571e345c-f35e-577e-bbd9-0d8ee849038f"
+          },
+          {
+            "name": "Data source",
+            "dataType": "string",
+            "sourceColumn": "data_source",
+            "summarizeBy": "none",
+            "lineageTag": "c005eb44-4f2c-5085-a6f3-80067df563f2"
+          },
+          {
+            "name": "Reading UTC",
+            "dataType": "dateTime",
+            "sourceColumn": "reading_utc",
+            "summarizeBy": "none",
+            "lineageTag": "f80f06de-be45-5fbc-8d9c-cbad9db43f3b",
+            "formatString": "MMM d HH:mm:ss"
+          },
+          {
+            "name": "Received UTC",
+            "dataType": "dateTime",
+            "sourceColumn": "ingestion_utc",
+            "summarizeBy": "none",
+            "lineageTag": "3d2f50dc-4967-5ab7-9545-5b1178efa8f3",
+            "formatString": "MMM d HH:mm:ss"
+          },
+          {
+            "name": "Minute UTC",
+            "dataType": "dateTime",
+            "sourceColumn": "minute_utc",
+            "summarizeBy": "none",
+            "lineageTag": "929e27cc-ad82-590a-b0ad-0a0d0b1b7232",
+            "formatString": "MMM d HH:mm"
+          },
+          {
+            "name": "Grade",
+            "dataType": "string",
+            "sourceColumn": "grade",
+            "summarizeBy": "none",
+            "lineageTag": "39ecf3ed-3dc5-5c4c-92ac-0797be950a2c"
+          },
+          {
+            "name": "Air temperature K",
+            "dataType": "double",
+            "sourceColumn": "air_temperature_k",
+            "summarizeBy": "none",
+            "lineageTag": "f4a5f7f5-4072-567e-ac91-7024766ece23",
+            "formatString": "0.0"
+          },
+          {
+            "name": "Process temperature K",
+            "dataType": "double",
+            "sourceColumn": "process_temperature_k",
+            "summarizeBy": "none",
+            "lineageTag": "612d5867-9d48-5537-b275-43f9becd575f",
+            "formatString": "0.0"
+          },
+          {
+            "name": "Rotational speed rpm",
+            "dataType": "double",
+            "sourceColumn": "rotational_speed_rpm",
+            "summarizeBy": "none",
+            "lineageTag": "41cffb23-7451-5b06-bf73-1295a051a4d1",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Torque Nm",
+            "dataType": "double",
+            "sourceColumn": "torque_nm",
+            "summarizeBy": "none",
+            "lineageTag": "f53c5e6a-6a90-5179-aa63-a20da3b6a708",
+            "formatString": "0.0"
+          },
+          {
+            "name": "Tool wear min",
+            "dataType": "double",
+            "sourceColumn": "tool_wear_min",
+            "summarizeBy": "none",
+            "lineageTag": "adfb68fa-0b13-5430-8f16-85dc846e3dcb",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Model score",
+            "dataType": "double",
+            "sourceColumn": "model_score",
+            "summarizeBy": "none",
+            "lineageTag": "b2cc82b4-4448-5dc0-bbbb-0d7ff6b288c4",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Review flag",
+            "dataType": "int64",
+            "sourceColumn": "review_flag",
+            "summarizeBy": "none",
+            "lineageTag": "aea02e4b-03a1-55c0-ac27-6ddcfb927c95",
+            "formatString": "#,0",
+            "isHidden": true
+          },
+          {
+            "name": "Score status",
+            "dataType": "string",
+            "sourceColumn": "score_status",
+            "summarizeBy": "none",
+            "lineageTag": "62f16dc5-479d-5d4b-a317-20f5d489fa0b"
+          },
+          {
+            "name": "Replay failure label",
+            "dataType": "int64",
+            "sourceColumn": "observed_failure",
+            "summarizeBy": "none",
+            "lineageTag": "ccffd0fd-1036-575f-9828-e56a8d65eb79",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Model version",
+            "dataType": "string",
+            "sourceColumn": "model_version",
+            "summarizeBy": "none",
+            "lineageTag": "b076d4c8-32ae-5a17-854f-bf733e51e925",
+            "isHidden": true
+          }
+        ],
+        "measures": [
+          {
+            "name": "Readings",
+            "expression": "COALESCE ( COUNTROWS ( 'Telemetry' ), 0 )",
+            "formatString": "#,0",
+            "lineageTag": "fdba5c1f-6c43-52ce-94bc-d18a4771b79f"
+          },
+          {
+            "name": "Assets reporting",
+            "expression": "COALESCE ( DISTINCTCOUNT ( 'Telemetry'[Asset] ), 0 )",
+            "formatString": "#,0",
+            "lineageTag": "bb39d975-1edb-58e2-8af1-6bbd4663db9e"
+          },
+          {
+            "name": "Review readings",
+            "expression": "COALESCE ( SUM ( 'Telemetry'[Review flag] ), 0 )",
+            "formatString": "#,0",
+            "lineageTag": "a78f001e-e3a3-5f34-b58a-95751daf1a4b"
+          },
+          {
+            "name": "Last received",
+            "expression": "MAX ( 'Telemetry'[Received UTC] )",
+            "formatString": "MMM d HH:mm:ss",
+            "lineageTag": "cb970c05-b262-5309-a5ee-8e9ff08eb039"
+          },
+          {
+            "name": "Peak score",
+            "expression": "MAX ( 'Telemetry'[Model score] )",
+            "formatString": "0%",
+            "lineageTag": "c79a77cc-0156-5eb3-ab4c-7a962988733d"
+          },
+          {
+            "name": "Mean score",
+            "expression": "AVERAGE ( 'Telemetry'[Model score] )",
+            "formatString": "0%",
+            "lineageTag": "4b4f081c-0404-5fe8-9737-819dc8dd80e9"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Telemetry",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(WatchPostgresServer, WatchPostgresDatabase),",
+                "    Readings = Source{[Schema=\"public\", Item=\"powerbi_telemetry\"]}[Data]",
+                "in",
+                "    Readings"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"WatchPostgresServer\",\"WatchPostgresDatabase\",\"Telemetry\"]"
+      },
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "0"
+      }
+    ],
+    "expressions": [
+      {
+        "name": "WatchPostgresServer",
+        "kind": "m",
+        "expression": "\"127.0.0.1:5433\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "lineageTag": "af326205-acf9-5df5-9f32-1e281945044f",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ]
+      },
+      {
+        "name": "WatchPostgresDatabase",
+        "kind": "m",
+        "expression": "\"maintenance\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "lineageTag": "bd703a1a-bd74-5afe-8734-9be38a02deb8",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ]
+      }
+    ]
+  }
+}

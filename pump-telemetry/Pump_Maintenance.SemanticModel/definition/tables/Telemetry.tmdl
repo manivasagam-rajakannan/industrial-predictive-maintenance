@@ -1,0 +1,252 @@
+table Telemetry
+	lineageTag: 2d1abf3b-f3f0-53d9-9254-45ac877428b2
+
+	measure Readings = COALESCE(COUNTROWS('Telemetry'), 0)
+		formatString: #,##0
+		lineageTag: 8c1baf92-81c8-5df9-8b75-b7f25069106b
+
+	measure 'Flagged Minutes' = COALESCE(SUM('Telemetry'[Anomaly Flag]), 0)
+		formatString: #,##0
+		lineageTag: d80e25c6-5b44-5629-9a47-8223f0c18aaa
+
+	measure 'Alert Rate' = DIVIDE([Flagged Minutes], [Readings], 0)
+		formatString: 0.00%
+		lineageTag: 193448fc-a36a-59ec-8f34-b86181c69958
+
+	measure 'Peak Fault Score' = MAX('Telemetry'[Fault Score])
+		formatString: 0.0%
+		lineageTag: 484f8441-2ac3-528f-ae4b-11739024d655
+
+	measure 'Alert Cutoff' = MAX('Telemetry'[Score Cutoff])
+		formatString: 0.0%
+		lineageTag: d00c92e6-98cc-5eec-87d8-6b3a235a183a
+
+	measure 'Alert Count' = CALCULATE(COUNTROWS('Telemetry'), KEEPFILTERS('Telemetry'[Anomaly Flag] = 1))
+		formatString: #,##0
+		lineageTag: 286d0376-e69b-5d2e-a3d2-2a97d0ab7c2b
+
+	measure 'Peak Vibration' = MAX('Telemetry'[Vibration])
+		formatString: 0.00
+		lineageTag: 4e832a34-766e-5710-9df3-fb7e98088e48
+
+	measure 'Peak Temperature' = MAX('Telemetry'[Temperature])
+		formatString: 0.0
+		lineageTag: 45b72eb1-32a3-5d69-92c6-8b1758aaf8fa
+
+	measure 'Minimum Pressure' = MIN('Telemetry'[Pressure])
+		formatString: 0.00
+		lineageTag: 96de5f91-220a-54fc-b7a6-0d527ecf6d7a
+
+	measure 'Peak Motor Current' = MAX('Telemetry'[Motor Current])
+		formatString: 0.0
+		lineageTag: 17361642-e69a-50b4-88ec-26575f13a8dd
+
+	measure 'Unclassified Alerts' = CALCULATE([Flagged Minutes], KEEPFILTERS('Telemetry'[Suspected Fault] = "Unclassified"))
+		formatString: #,##0
+		lineageTag: 30392a13-2974-59a3-b3b9-826ccd37ee63
+
+	measure 'Holdout Readings' = CALCULATE(COUNTROWS('Telemetry'), KEEPFILTERS('Telemetry'[Data Split] = "Holdout"))
+		formatString: #,##0
+		lineageTag: 51197574-9d2b-5240-8c7c-696ee9968392
+
+	measure 'Holdout Injected Faults' = CALCULATE([Holdout Readings], KEEPFILTERS('Telemetry'[Injected Fault] <> "Nominal"))
+		formatString: #,##0
+		lineageTag: 84b0d04b-0cd8-5692-a663-395da26ea087
+
+	measure 'Holdout Detected Faults' = CALCULATE([Holdout Readings], KEEPFILTERS('Telemetry'[Outcome] = "True positive"))
+		formatString: #,##0
+		lineageTag: f5eb89a9-b629-5f1e-ab73-63339ca1f5f5
+
+	measure 'True Positives' = COALESCE(CALCULATE([Holdout Readings], KEEPFILTERS('Telemetry'[Outcome] = "True positive")), 0)
+		formatString: #,##0
+		lineageTag: d3ff9ca5-4c8f-53b7-aa8c-ba66a9095f39
+
+	measure 'False Positives' = COALESCE(CALCULATE([Holdout Readings], KEEPFILTERS('Telemetry'[Outcome] = "False positive")), 0)
+		formatString: #,##0
+		lineageTag: cf91c503-7755-5867-a601-b0a1e60aefdd
+
+	measure 'False Negatives' = COALESCE(CALCULATE([Holdout Readings], KEEPFILTERS('Telemetry'[Outcome] = "False negative")), 0)
+		formatString: #,##0
+		lineageTag: 4df910dd-6b8e-5213-8d4f-8885d46c0cdb
+
+	measure 'True Negatives' = COALESCE(CALCULATE([Holdout Readings], KEEPFILTERS('Telemetry'[Outcome] = "True negative")), 0)
+		formatString: #,##0
+		lineageTag: 304e07b6-a1a4-5c32-b030-b8ebd7bcfad3
+
+	measure Precision = DIVIDE([True Positives], [True Positives] + [False Positives], 0)
+		formatString: 0.0%
+		lineageTag: a2ea198c-9e8a-529a-b14c-5e82143dc75b
+
+	measure Recall = DIVIDE([True Positives], [True Positives] + [False Negatives], 0)
+		formatString: 0.0%
+		lineageTag: eb66b589-2a45-5ba7-aecb-d3249aa0ce65
+
+	measure 'F1 Score' = DIVIDE(2 * [True Positives], 2 * [True Positives] + [False Positives] + [False Negatives], 0)
+		formatString: 0.0%
+		lineageTag: 3d7db449-2d01-5936-a879-bebfeeaa3813
+
+	measure 'False Alarm Rate' = DIVIDE([False Positives], [False Positives] + [True Negatives], 0)
+		formatString: 0.00%
+		lineageTag: 6c8c62da-3895-54d2-958e-a3138d7fc37f
+
+	column 'Reading Time'
+		dataType: dateTime
+		lineageTag: 75d3081b-3d9c-5554-885e-81591cf5b3ae
+		summarizeBy: none
+		sourceColumn: timestamp
+		formatString: MMM d, HH:mm
+
+	column 'Pump ID'
+		dataType: string
+		lineageTag: e992e5b1-6bb4-5894-a1c5-4510464d55ba
+		summarizeBy: none
+		sourceColumn: machine_id
+
+	column Vibration
+		dataType: double
+		lineageTag: f541695a-a0cb-5a37-9613-6e4ef16b963e
+		summarizeBy: none
+		sourceColumn: vibration_mm_s
+		formatString: 0.000
+
+	column Temperature
+		dataType: double
+		lineageTag: 0c7b1190-3fb0-540f-b012-28f6b750923c
+		summarizeBy: none
+		sourceColumn: temperature_c
+		formatString: 0.00
+
+	column Pressure
+		dataType: double
+		lineageTag: e4807bce-57bc-56d2-9484-88c7d1af0b17
+		summarizeBy: none
+		sourceColumn: pressure_bar
+		formatString: 0.00
+
+	column 'Motor Current'
+		dataType: double
+		lineageTag: cb936af2-6d45-5dfe-b16b-f2448eda41f8
+		summarizeBy: none
+		sourceColumn: motor_current_amp
+		formatString: 0.00
+
+	column 'Injected Fault'
+		dataType: string
+		lineageTag: eb9f2383-a5ac-51b5-9736-045ff77cf055
+		summarizeBy: none
+		sourceColumn: injected_fault
+
+	column 'Data Split'
+		dataType: string
+		lineageTag: 6f4e61d7-e322-5ae4-aff3-3cbd19dc689e
+		summarizeBy: none
+		sourceColumn: data_split
+
+	column 'PCA 1'
+		dataType: double
+		lineageTag: 89e83de2-75b3-5c31-8680-dbb9c83c07ff
+		summarizeBy: none
+		sourceColumn: pca_1
+		formatString: 0.000
+		isHidden
+
+	column 'PCA 2'
+		dataType: double
+		lineageTag: 22358957-24ba-5f1e-ae12-4e1167a1b209
+		summarizeBy: none
+		sourceColumn: pca_2
+		formatString: 0.000
+		isHidden
+
+	column 'PCA Error'
+		dataType: double
+		lineageTag: 3eb5e7ec-5637-5acc-a816-94abb0446a84
+		summarizeBy: none
+		sourceColumn: pca_error
+		formatString: 0.000
+
+	column 'Fault Score'
+		dataType: double
+		lineageTag: 29427b01-afe4-58f3-9d7f-670a6a650138
+		summarizeBy: none
+		sourceColumn: fault_score
+		formatString: 0.0%
+
+	column 'Score Cutoff'
+		dataType: double
+		lineageTag: 8b5c54ed-0503-5d30-99d3-f69b6d53d203
+		summarizeBy: none
+		sourceColumn: alert_cutoff
+		formatString: 0.0%
+		isHidden
+
+	column 'Anomaly Flag'
+		dataType: int64
+		lineageTag: 527b1726-bf71-52d9-82fc-db39fc83e079
+		summarizeBy: none
+		sourceColumn: anomaly_flag
+		formatString: 0
+		isHidden
+
+	column 'Suspected Fault'
+		dataType: string
+		lineageTag: 1e14ab96-7a9b-5abf-a9dc-758c933ada80
+		summarizeBy: none
+		sourceColumn: suspected_fault
+
+	column 'Review Cue'
+		dataType: string
+		lineageTag: 0b6642b9-c5c2-5308-9220-ff004c456909
+		summarizeBy: none
+		sourceColumn: review_cue
+
+	column Outcome
+		dataType: string
+		lineageTag: faf83c66-0064-540c-a313-8eb0ed286c25
+		summarizeBy: none
+		sourceColumn: outcome
+
+	column 'Reading Date'
+		dataType: string
+		lineageTag: 736f4c48-dad0-5e70-80f6-5077116441ac
+		summarizeBy: none
+		sourceColumn: reading_date
+
+	column 'Reading Hour'
+		dataType: dateTime
+		lineageTag: b8f1c976-94f9-534e-be71-0d321eaf5db1
+		summarizeBy: none
+		sourceColumn: reading_hour
+		formatString: MMM d, HH:mm
+
+	partition Telemetry = m
+		mode: import
+		source =
+				let
+					Rows = Csv.Document(ScoredTelemetryCsv, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+					Headers = Table.PromoteHeaders(Rows, [PromoteAllScalars = true]),
+					Typed = Table.TransformColumnTypes(Headers, {
+					{"timestamp", type datetime},
+					{"machine_id", type text},
+					{"vibration_mm_s", type number},
+					{"temperature_c", type number},
+					{"pressure_bar", type number},
+					{"motor_current_amp", type number},
+					{"injected_fault", type text},
+					{"data_split", type text},
+					{"pca_1", type number},
+					{"pca_2", type number},
+					{"pca_error", type number},
+					{"fault_score", type number},
+					{"alert_cutoff", type number},
+					{"anomaly_flag", Int64.Type},
+					{"suspected_fault", type text},
+					{"review_cue", type text},
+					{"outcome", type text}
+					}, "en-US"),
+					WithDate = Table.AddColumn(Typed, "reading_date", each Date.ToText(Date.From([timestamp]), [Format = "yyyy-MM-dd", Culture = "en-US"]), type text),
+					WithHour = Table.AddColumn(WithDate, "reading_hour", each DateTime.From(Date.From([timestamp])) + #duration(0, Time.Hour(DateTime.Time([timestamp])), 0, 0), type datetime)
+				in
+					WithHour
+
+	annotation PBI_ResultType = Table
