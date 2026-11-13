@@ -4,6 +4,11 @@
 
 Maintenance Watch helps an operator see which machine readings warrant review. A Decision Tree scores uploaded CSV rows and incoming readings. The app highlights scores above 50% and can sound an alert, and Power BI tracks the live feed over time.
 
+## Live demos
+
+- **Pump Telemetry Copilot** scores a two-reading sample and shows the overheating alert and manual checklist. [Open Pump Telemetry Copilot](https://pump-telemetry-copilot-f7q1.onrender.com/)
+- **Maintenance Watch** displays synthetic machine telemetry and scores a sample dataset with a review alert. [Open Maintenance Watch](https://maintenance-watch-live-f7q1.onrender.com/)
+
 ## Integrated release
 
 Run Pump Telemetry Copilot and Maintenance Watch with multi-format sensor uploads, PostgreSQL, and editable Power BI reports. The sample workbooks let you follow a flagged reading from the operator screen to the report. [Integrated source and setup](https://github.com/manivasagam-rajakannan/industrial-predictive-maintenance/tree/portfolio-apps) · [Pump Telemetry Copilot repository](https://github.com/manivasagam-rajakannan/pump-telemetry-copilot)
